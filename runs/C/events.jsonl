@@ -33,3 +33,4 @@
 {"t": "2026-10-29 12:46:19", "kind": "stage_cap", "gen": 753, "stage_index": 4, "stage": "boulder"}
 {"t": "2026-10-29 12:46:19", "kind": "stage_start", "gen": 753, "stage_index": 5, "stage": "polish", "expect": "Everything on, only the env score + landing bonus. Pass = 98% on 100 + 100 fresh flights, then the 1,000-flight goal check."}
 {"t": "2026-10-29 12:46:54", "kind": "new_best", "gen": 753, "stage_index": 5, "stage": "polish", "check": {"fitness": 168.9461420506497, "score": 109.02553209561407, "landed": 0.47, "crashed": 0.06, "boulder": 0.28, "timeout": 0.01}, "champion": "runs/C/champions/g00753_s5_best.pkl"}
+{"t": "2026-10-29 12:50:35", "kind": "new_best", "gen": 758, "stage_index": 5, "stage": "polish", "check": {"fitness": 233.9480097212715, "score": 155.14296268617065, "landed": 0.61, "crashed": 0.08, "boulder": 0.15, "timeout": 0.01}, "champion": "runs/C/champions/g00758_s5_best.pkl"}
