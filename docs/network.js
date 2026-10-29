@@ -16,11 +16,11 @@ const INPUT_INFO = {
   vangle: ['turn rate', 'how fast the tilt is changing'],
   leg_l: ['left leg touching', '1 or 0'],
   leg_r: ['right leg touching', '1 or 0'],
-  drift: ['drift sensor', 'smoothed sideways acceleration; ≈ +1 = a full-strength push to the right'],
+  drift: ['drift sensor', 'smoothed sideways acceleration, side-engine steps left out: wind + its own tilted main engine; +1 ≈ a full-strength gust to the right'],
   '|x|': ['distance from the middle', 'the same as x but without the sign: "how far off", either side'],
   boulder_dx: ['boulder, how far right', 'boulder centre minus lander, in x units; 0 if no boulder'],
   boulder_dy: ['boulder, how far up', 'negative = the boulder is below the lander'],
-  boulder_r: ['boulder size', 'radius in x units (0.04-0.065 at full size); 0 = no boulder'],
+  boulder_r: ['boulder size', 'radius ÷ 10 m: 0.08-0.13 at full size; 0 = no boulder'],
   waypoint_dx: ['route: off the waypoint by', 'x minus where it should head (beside the boulder, else the pad)'],
   above_boulder: ['route: height to spare', 'height above the boulder top while over it; 0 elsewhere'],
 };

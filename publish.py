@@ -134,7 +134,7 @@ def bust_caches():
     """Pages are cached for 10 minutes: version the scripts so a browser never runs an old one."""
     import hashlib
     import re
-    for page, scripts in [('index.html', ['app.js']), ('network.html', ['network.js'])]:
+    for page, scripts in [('index.html', ['app.js']), ('network.html', ['network.js']), ('senses.html', ['senses.js'])]:
         path = os.path.join(DOCS, page)
         html = open(path).read()
         for js in scripts:
@@ -148,8 +148,9 @@ def network_data():
     runs = [d for d in sorted(glob.glob(os.path.join(ROOT, 'runs', '*')), key=os.path.getmtime)
             if glob.glob(os.path.join(d, 'champions', '*.pkl')) and not os.path.basename(d).startswith('test_')]
     if runs:
-        subprocess.run([os.path.join(ROOT, '.venv', 'bin', 'python'), os.path.join(ROOT, 'make_network_data.py'),
-                        '--run', os.path.basename(runs[-1])], cwd=ROOT)
+        for script in ('make_network_data.py', 'make_senses_data.py'):
+            subprocess.run([os.path.join(ROOT, '.venv', 'bin', 'python'), os.path.join(ROOT, script),
+                            '--run', os.path.basename(runs[-1])], cwd=ROOT)
 
 
 def push():

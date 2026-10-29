@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lander Senses</title>
+<meta name="description" content="How the lander sees the world: you see a picture, it sees 15 numbers. A side-by-side replay of reality and the lander's view, and what it can't see.">
+<link rel="stylesheet" href="style.css">
+<style>
+  .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+  @media (max-width: 760px) { .two { grid-template-columns: 1fr; } }
+  .box { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin: 12px 0; }
+  .box h3 { margin: 0 0 8px; font-size: 1rem; }
+  canvas.view { width: 100%; height: auto; display: block; border-radius: 8px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; margin: 8px 0; font-size: .9rem; }
+  .pill { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 99px; padding: 4px 12px; cursor: pointer; font: inherit; font-size: .85rem; }
+  .pill:hover, .pill.on { border-color: var(--accent); color: var(--accent); }
+  .gauges { display: grid; grid-template-columns: max-content 1fr 58px; gap: 4px 10px; align-items: center; font-size: .85rem; }
+  .g { height: 12px; background: var(--code); border-radius: 3px; position: relative; overflow: hidden; }
+  .g i { position: absolute; top: 0; bottom: 0; background: var(--accent); }
+  .g b { position: absolute; top: 0; bottom: 0; left: 50%; width: 1px; background: var(--muted); }
+  .gauges .v { font-variant-numeric: tabular-nums; text-align: right; }
+  .gauges .grp { grid-column: 1 / -1; color: var(--muted); font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; margin-top: 6px; }
+  .note { border-left: 3px solid var(--accent); padding: 6px 12px; background: var(--band); border-radius: 0 8px 8px 0; margin: 12px 0; }
+  table.tbl { border-collapse: collapse; width: 100%; font-size: .88rem; }
+  table.tbl th, table.tbl td { border-bottom: 1px solid var(--line); padding: 6px 8px; text-align: left; vertical-align: top; }
+  pre { background: var(--code); padding: 10px 12px; border-radius: 8px; overflow-x: auto; font-size: .82rem; }
+  details { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 14px; margin: 8px 0; }
+  details summary { cursor: pointer; font-weight: 600; }
+  .legend { font-size: .8rem; color: var(--muted); margin-top: 6px; }
+  .legend span { display: inline-block; margin-right: 12px; }
+  .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+</style>
+</head>
+<body>
+<nav class="top"><a class="brand" href="index.html">🌙 Lander Curriculum</a>
+  <a href="index.html">Log</a><a href="senses.html" class="on">How it sees</a><a href="network.html">Network</a><a href="lessons.html">Lessons</a><a href="podcast/index.html">Podcast</a>
+  <a href="https://github.com/JCA374/lunarlander-curriculum">Code</a></nav>
+<main>
+<h1>How the lander sees the world</h1>
+<p class="lede">You see a picture: hills, flags, a rock, a little craft fighting the wind. The lander sees none of that.
+Fifty times a second it gets <b>15 numbers</b>, and that is its entire world. This page shows the two side by side, on a real
+flight of the current champion, so you can see what it knows, what it guesses, and what it is blind to.</p>
+<p class="muted" id="meta"></p>
+
+<section>
+<h2>1. Two views of the same flight</h2>
+<div class="controls">
+  <button class="pill" id="play">▶ play</button>
+  <label>step <input type="range" id="t" min="0" max="10" value="0" style="width:280px"></label>
+  <span id="tl" class="muted"></span>
+  <label><input type="checkbox" id="slow"> slow motion</label>
+</div>
+<div class="two">
+  <div class="box"><h3>What you see</h3><canvas class="view" id="real" width="600" height="400"></canvas>
+    <div class="legend"><span><i class="sw" style="background:#4dabf7"></i>the real wind (hidden from the lander)</span><span><i class="sw" style="background:#e6c84c"></i>flags</span></div></div>
+  <div class="box"><h3>What the lander sees</h3><canvas class="view" id="seen" width="600" height="400"></canvas>
+    <div class="legend"><span><i class="sw" style="background:#69db7c"></i>its speed</span><span><i class="sw" style="background:#ff8787"></i>its drift sensor (the sideways push it feels)</span><span><i class="sw" style="background:#ffa94d"></i>waypoint</span></div></div>
+</div>
+<p>The right-hand picture is drawn <i>only</i> from the 15 numbers. The pad is a line at the origin, because every position is measured
+from the pad's centre. There is no ground: the lander doesn't know the hills exist. The boulder is a perfect circle, because three numbers
+(right, up, size) are all it gets. The wind isn't there at all, only the drift sensor: the total sideways push it feels, from the wind and from its own tilted main engine.</p>
+
+<div class="box">
+<h3>The 15 numbers, right now</h3>
+<div class="gauges" id="gauges"></div>
+</div>
+</section>
+
+<section>
+<h2>2. The wind it can't see</h2>
+<p>The blue line is the sideways force the wind <i>actually</i> applies at each step. The lander never gets it. The red line is the
+<b>drift sensor</b>, and it is <i>not</i> a wind gauge. It's an accelerometer: it averages how fast the sideways speed changes, leaving out
+the steps when a side engine fired. So it feels the wind, but it also feels the lander's own <b>main engine</b> whenever the lander is tilted,
+because a tilted main engine pushes sideways too. In this flight the lander steers hard, and its own thrust (the big red swings) is
+larger than the wind itself.</p>
+<p>That's still useful: "something is pushing me sideways, this hard" is exactly what it needs to know in order to lean back, and it's
+what lifted the hand-written pilot from 72% to 94% landings in wind. But a pure wind estimate would have to subtract the lander's own thrust,
+which this sensor doesn't do. That's an idea for a better sensor.</p>
+<div class="box"><div style="position:relative;height:260px"><canvas id="windc"></canvas></div></div>
+<p>Turbulence is the same story, but twisting instead of pushing. The orange line below is the true turning force; the lander only feels it
+through its <b>turn rate</b> (green), after the fact.</p>
+<div class="box"><div style="position:relative;height:220px"><canvas id="torquec"></canvas></div></div>
+</section>
+
+<section>
+<h2>3. What it can't see, and how it copes</h2>
+<div class="box" style="overflow-x:auto"><table class="tbl">
+<tr><th>Hidden from it</th><th>Why it matters</th><th>How it copes</th></tr>
+<tr><td><b>The wind</b></td><td>Gusts up to 15 push it sideways, swelling and fading over a few seconds.</td><td>The drift sensor feels any sideways push except its side engines: the wind plus its own tilted main engine. It leans back against that push before it has drifted far.</td></tr>
+<tr><td><b>Turbulence</b></td><td>A twisting force that tips the lander over.</td><td>It sees its tilt and turn rate, and fires a side engine to correct. Always a step behind.</td></tr>
+<tr><td><b>The ground's shape</b></td><td>Outside the flags the moon is hilly. A touchdown there slides or tips over.</td><td>It doesn't know the hills, so it learned to fly <i>pad first</i>: reach the flat pad horizontally, then descend. The |x| input ("how far off the middle") helps with that.</td></tr>
+<tr><td><b>The flags</b></td><td>Landing between them is the goal.</td><td>They're implicit: x = ±0.2 is a flag. It learned where that is from the rewards, not from seeing them.</td></tr>
+<tr><td><b>The boulder's true shape</b></td><td>It's a circle here, so three numbers describe it exactly.</td><td>A lumpier rock would need more numbers, or a few "range finder" rays.</td></tr>
+<tr><td><b>Time and fuel</b></td><td>A flight ends after 1,000 steps; every engine firing costs score.</td><td>It doesn't know either. Training charges −100 for running out of time, so it learned not to hover.</td></tr>
+<tr><td><b>The past</b></td><td>A feed-forward network has no memory: each step it decides from scratch.</td><td>The drift sensor carries the memory for it, as a running average.</td></tr>
+<tr><td><b>The future</b></td><td>It can't see a gust coming.</td><td>Nobody can. It keeps a margin: lean early, descend only over the pad.</td></tr>
+</table></div>
+</section>
+
+<section>
+<h2>4. Where the numbers come from, worked out</h2>
+<p>The game measures the world in metres: 20 m wide, 13.3 m tall, the pad at 3.33 m up, from x = 8 to 12. The network gets everything rescaled so
+that typical values sit between −1 and +1, which neural networks handle best. For the moment you've picked above:</p>
+<div class="box"><pre id="worked"></pre></div>
+<details><summary>Why rescale at all?</summary>
+<p>A neuron multiplies each input by a weight and adds them up. If one input ranged over thousands and another over hundredths, the big one
+would swamp the small one until the weights learned to compensate, and learning would be slow and fragile. Keeping everything near ±1 puts all
+inputs on an equal footing from the start. The game designers did this for the 8 standard numbers; the extra sensors here follow the same rule.</p></details>
+<details><summary>Why are the speeds such small numbers?</summary>
+<p>The game divides each speed by its 50 steps per second and multiplies by half the screen size. Sideways: vx = speed in m/s × 10 / 50,
+so vx = 0.1 means 0.5 m/s. Vertical: vy = speed in m/s × 6.67 / 50, so vy = −0.3 means falling at about 2.25 m/s. Only consistency
+matters to the network; it never needs to know the units.</p></details>
+</section>
+
+<section>
+<h2>5. Try it yourself</h2>
+<p>Watch the right-hand view with the left one covered (or squint). Could <i>you</i> land from that view alone? That's the lander's job, every
+flight. Things to look for in the replay:</p>
+<ul>
+<li>At the start, the red drift arrow is zero: it hasn't felt anything yet. Watch it grow when the lander tilts and fires its main engine: that's its own push, not the wind.</li>
+<li>When the boulder is below it, the orange waypoint jumps to the side of the boulder. Once the lander is below the boulder, the waypoint snaps back to the pad.</li>
+<li>When a leg touches, the legs' numbers flip from 0 to 1. That's its only sense of touch.</li>
+</ul>
+</section>
+</main>
+<footer>Lander Curriculum · drawn in your browser from <code>data/senses.json</code>, regenerated with every site update.</footer>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="senses.js?v=c61a5d16"></script>
+</body>
+</html>
