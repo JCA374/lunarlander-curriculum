@@ -79,7 +79,8 @@ async function main() {
     });
   } };
   // y-axis autoscale: from just below the lowest value shown (rounded down to 5) up to 100
-  const ys = rows.flatMap((r) => [100 * r.champ_landed, r.check_landed === '' ? 100 : 100 * r.check_landed]).filter((v) => !isNaN(v));
+  const ys = rows.flatMap((r) => [100 * r.champ_landed, r.check_landed === '' ? 100 : 100 * r.check_landed,
+    r.goal_landed === '' || r.goal_landed == null ? 100 : 100 * r.goal_landed]).filter((v) => !isNaN(v));
   const yMin = ys.length ? Math.max(0, Math.floor((Math.min(...ys) - 2) / 5) * 5) : 0;
   const yMax = ys.length ? Math.min(100, Math.ceil((Math.max(...ys) + 1) / 2) * 2) : 100;
   if (window.Chart && rows.length) new Chart($('chart'), {
@@ -89,6 +90,8 @@ async function main() {
         borderColor: col('--accent'), borderWidth: 1.5, pointRadius: 0, tension: .2 },
       { label: 'champion, 100 fresh check flights', data: rows.filter((r) => r.check_landed !== '').map((r) => ({ x: +r.gen, y: 100 * r.check_landed })),
         showLine: false, pointRadius: 3.5, backgroundColor: col('--good'), borderColor: col('--good') },
+      { label: 'champion, 100 fresh REAL-task flights', data: rows.filter((r) => r.goal_landed !== '' && r.goal_landed != null).map((r) => ({ x: +r.gen, y: 100 * r.goal_landed })),
+        showLine: true, borderColor: col('--warn'), backgroundColor: col('--warn'), pointRadius: 2.5, borderWidth: 1 },
       { label: 'goal 98%', data: rows.length ? [{ x: +rows[0].gen, y: 98 }, { x: +rows[rows.length - 1].gen, y: 98 }] : [],
         borderColor: col('--bad'), borderDash: [5, 4], borderWidth: 1, pointRadius: 0, clip: 4 },
     ] },
@@ -110,6 +113,7 @@ function eventHtml(e) {
     case 'run_start': title = `Run ${e.run} started`; body = e.note; break;
     case 'stage_start': title = `Stage started: ${e.stage}`; body = e.expect ? 'Expected: ' + e.expect : ''; break;
     case 'new_best': title = `New best champion in ${e.stage} (gen ${e.gen})`; body = 'On 100 fresh flights: ' + chk(e.check); break;
+    case 'goal_best': title = `Best so far on the real task (gen ${e.gen}, during ${e.stage})`; body = 'On 100 fresh real-task flights (wind 15, turbulence 1.5, boulder): ' + chk(e.check) + '\nA best-of-many on 100 flights flatters; claims are checked on 400+ paired flights.'; break;
     case 'check_pass': title = `Check passed in ${e.stage}, confirming on a second 100`; body = `First: ${chk(e.check)}\nConfirm: ${chk(e.confirm)}`; break;
     case 'stage_pass': title = `✅ Stage passed: ${e.stage} (gen ${e.gen})`; body = `Check: ${chk(e.check)}\nConfirm: ${chk(e.confirm)}`; break;
     case 'stage_cap': title = `Stage ${e.stage} hit its generation cap; moving on`; break;
