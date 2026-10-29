@@ -51,7 +51,7 @@ function chart(id, sets, opts={}){
   const ds=sets.map((s,i)=>({label:s.label,data:s.data,borderColor:s.color||C[i],backgroundColor:s.color||C[i],pointRadius:s.points?3:0,showLine:!s.points,borderWidth:1.5,yAxisID:s.y||'y',tension:.15}));
   if(charts[id]){charts[id].data.datasets=ds;charts[id].update('none');return}
   charts[id]=new Chart($(id),{type:'line',data:{datasets:ds},options:{animation:false,maintainAspectRatio:false,interaction:{mode:'nearest',intersect:false},
-    scales:{x:{type:'linear',ticks:{color:'#888'},grid:{color:'#2a2a2a'}},y:{ticks:{color:'#888'},grid:{color:'#2a2a2a'},...(opts.y||{})},
+    scales:{x:{type:'linear',ticks:{color:'#888'},grid:{color:'rgba(128,128,128,.18)'}},y:{ticks:{color:'#888'},grid:{color:'rgba(128,128,128,.18)'},...(opts.y||{})},
     ...(opts.y2?{y2:{position:'right',ticks:{color:'#888'},grid:{display:false}}}:{})},plugins:{legend:{labels:{color:'#aaa',boxWidth:10}}}}});
 }
 async function load(){
