@@ -88,6 +88,13 @@ def stage_world(stage, t):
     return World(**w)
 
 
+def check_world(stage):
+    """The world a pass check flies: the final stage world, no support, no mixed-in boulders."""
+    w = stage_world(stage, 1.0)
+    w.boulder_mix = 0.0
+    return w
+
+
 class Run:
     def __init__(self, a):
         self.a = a
@@ -183,7 +190,7 @@ class Run:
                'check_landed': '', 'check_score': '', 'secs': 0}
         # pass check: only once the ramp is done (final world, no support)
         if t >= 1 and st['stage_gen'] % a.check_every == 0:
-            final = stage_world(stg, 1.0)
+            final = check_world(stg)
             chk = self.check(champ, final, reward)
             row['check_landed'], row['check_score'] = round(chk['landed'], 3), round(chk['score'], 1)
             best = st['best_check'].get(str(st['stage']), -1)
@@ -269,8 +276,8 @@ def main():
     ap.add_argument('--curriculum', required=True)
     ap.add_argument('--run', required=True)
     ap.add_argument('--config', default='neat-config.ini')
-    ap.add_argument('--seed-net', default='models/seed_mlp.json')
-    ap.add_argument('--seed-noise', type=float, default=0.05)
+    ap.add_argument('--seed-net', default='models/seed_mlp15.json')
+    ap.add_argument('--seed-noise', type=float, default=0.02)
     ap.add_argument('--workers', type=int, default=6)
     ap.add_argument('--flights', type=int, default=10)
     ap.add_argument('--reeval-top', type=int, default=8)

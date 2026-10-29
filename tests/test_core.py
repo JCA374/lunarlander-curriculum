@@ -45,18 +45,19 @@ def test_seed_ranges_do_not_overlap():
 
 
 def test_mlp_to_genome_flies_identically():
-    mlp = MLP(13, 8, rng=np.random.default_rng(3))
+    mlp = MLP(15, 8, rng=np.random.default_rng(3))
+    mlp.W2 *= 20                                   # realistic: cloned output scores reach +-20 (tanh would tie them)
     cfg = config()
     g = SeededGenome(1)
     mlp_to_genome(g, cfg.genome_config, mlp.to_dict())
     pol = NeatPolicy(g, cfg)
-    X = np.random.default_rng(0).normal(0, 1, (200, 13))
+    X = np.random.default_rng(0).normal(0, 1, (2000, 15))
     assert all(pol(x) == mlp(x) for x in X)
     assert size(g)[0] == 8                                          # at least one hidden layer, kept
 
 
 def test_seed_hidden_nodes_are_never_deleted():
-    SEED['net'], SEED['noise'] = MLP(13, 6).to_dict(), 0.0
+    SEED['net'], SEED['noise'] = MLP(15, 6).to_dict(), 0.0
     try:
         cfg = config()
         SeededGenome.protected = tuple(range(4, 10))
@@ -73,7 +74,7 @@ def test_smoke_train_then_resume(tmp_path):
     """Train, SIGTERM after 3 generations, resume: the generation counter carries on from the checkpoint."""
     import pickle, shutil, time
     seed = tmp_path / 'seed.json'
-    seed.write_text(json.dumps(MLP(13, 4).to_dict()))
+    seed.write_text(json.dumps(MLP(15, 4).to_dict()))
     cur = tmp_path / 'c.json'
     cur.write_text(json.dumps({'name': 't', 'stages': [
         {'name': 'a', 'world': {'wind': 0, 'turbulence': 0}, 'cap': 1000, 'pass': {'landed': 2}}]}))
@@ -123,3 +124,11 @@ def test_steady_push_follows_the_wind_ramp():
 def test_boulder_size_ramp_scales_only_the_radius():
     a, b = boulder_spec(42), boulder_spec(42, 0.4)
     assert a[:2] == b[:2] and b[2] == pytest.approx(0.4 * a[2])
+
+
+def test_boulder_mix_and_check_world():
+    from train import check_world
+    env = make_env()
+    n = sum(Flight(env, s, World(boulder_mix=0.3)).boulder is not None for s in range(300))
+    assert 60 < n < 120
+    assert check_world({'world': {'boulder_mix': 0.3}}).boulder_mix == 0.0

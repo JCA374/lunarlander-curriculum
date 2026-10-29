@@ -24,9 +24,9 @@ LEG_DOWN = 18 / SCALE
 PAD_HALF_WIDTH = 0.2                      # flags at x = +-0.2 in observation units
 CENTRE_BONUS = 50.0
 LANDING_BONUS = 100.0
-N_INPUTS = 13
+N_INPUTS = 15
 INPUT_NAMES = ['x', 'y', 'vx', 'vy', 'angle', 'vangle', 'leg_l', 'leg_r', 'drift', '|x|',
-               'boulder_dx', 'boulder_dy', 'boulder_r']
+               'boulder_dx', 'boulder_dy', 'boulder_r', 'waypoint_dx', 'above_boulder']
 
 
 @dataclass
@@ -37,6 +37,7 @@ class World:
     boulder: bool = False                 # a boulder on the approach
     support: float = 0.0                  # training wheels: a stabilising torque, 1 = full, 0 = off
     boulder_size: float = 1.0             # curriculum: boulder radius as a share of its full size
+    boulder_mix: float = 0.0              # curriculum: share of flights that get a boulder anyway (keeps the skill)
 
     def as_dict(self):
         return asdict(self)
@@ -109,7 +110,27 @@ def inputs(obs, drift, boulder, lander_pos):
         bx, by, r = boulder
         lx, ly = lander_pos
         v += [(bx - lx) / (W / 2), (by - ly) / (H / 2), r / (W / 2)]
-    return np.array(v)
+    return np.array(v + waypoint_inputs(v))
+
+
+def waypoint_inputs(v):
+    """Two route sensors (inputs 14-15), computed from the 13 above: how far the lander is from where it
+    should be heading (beside the boulder until it is below it, then the pad centre), and how far it is
+    above the height it must keep while over the boulder (0 when no such height applies). They make
+    "go beside it, stay above it" a nearly linear rule. A policy with 13 inputs never sees them."""
+    from lander.teacher import target_x
+    tx, floor = target_x(v, _params())
+    return [v[0] - tx, (v[1] - floor) if floor is not None else 0.0]
+
+
+_P = {}
+
+
+def _params():
+    if 'p' not in _P:
+        from lander.teacher import load_params
+        _P['p'] = load_params()
+    return _P['p']
 
 
 class Flight:
@@ -126,7 +147,8 @@ class Flight:
         self.push = world.steady * steady_push(seed) * world.wind / WIND_POWER if world.steady else 0.0
         _remove_boulder(env)
         self.obs, _ = env.reset(seed=self.seed)
-        self.boulder = boulder_spec(seed, world.boulder_size) if world.boulder else None
+        mixed = world.boulder_mix and np.random.default_rng([self.seed, 17]).random() < world.boulder_mix
+        self.boulder = boulder_spec(seed, world.boulder_size) if (world.boulder or mixed) else None
         if self.boulder:
             _add_boulder(env, *self.boulder)
         self.sensor = DriftSensor()

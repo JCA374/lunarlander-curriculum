@@ -28,7 +28,9 @@ def mlp_to_genome(genome, config, mlp):
     genome.nodes, genome.connections = {}, {}
     for o in range(n_out):
         n = genome.create_node(gc, o)
-        n.bias, n.activation, n.response = float(b2[o]), 'tanh', 1.0
+        # identity, not tanh: the cloned output scores reach +-20, and tanh(2.5 z) rounds several of them to
+        # exactly 1.0, so argmax picked the first of a tie, not the best action (fixed 2026-10-29, attempt D)
+        n.bias, n.activation, n.response = float(b2[o]), 'identity', 1.0
         genome.nodes[o] = n
     for j, k in enumerate(hidden):
         n = genome.create_node(gc, k)
@@ -77,9 +79,10 @@ class SeededGenome(neat.DefaultGenome):
 class NeatPolicy:
     def __init__(self, genome, config):
         self.net = neat.nn.FeedForwardNetwork.create(genome, config)
+        self.n = len(config.genome_config.input_keys)
 
     def __call__(self, v, flight=None):
-        return int(np.argmax(self.net.activate(v)))
+        return int(np.argmax(self.net.activate(v[:self.n])))   # a 13-input network ignores the route sensors
 
 
 def size(genome):
