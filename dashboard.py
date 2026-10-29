@@ -34,12 +34,12 @@ select,button{background:var(--panel);color:var(--ink);border:1px solid var(--li
 <span id="upd" style="color:var(--muted)"></span></header>
 <main>
 <div class="card" style="grid-column:1/-1"><div class="kpis" id="kpis"></div></div>
-<div class="card"><h3>Landed: champion (train+select flights) and fresh 100-flight checks</h3><canvas id="c1" height="220"></canvas></div>
-<div class="card"><h3>Fitness: best and population mean</h3><canvas id="c2" height="220"></canvas></div>
-<div class="card"><h3>Champion failure modes: boulder hits, timeouts</h3><canvas id="c3" height="220"></canvas></div>
-<div class="card"><h3>World: wind, turbulence, support (training wheels)</h3><canvas id="c4" height="220"></canvas></div>
-<div class="card"><h3>Network size and species</h3><canvas id="c5" height="220"></canvas></div>
-<div class="card"><h3>Seconds per generation</h3><canvas id="c6" height="220"></canvas></div>
+<div class="card"><h3>Landed: champion (train+select flights) and fresh 100-flight checks</h3><div style="position:relative;height:240px"><canvas id="c1"></canvas></div></div>
+<div class="card"><h3>Fitness: best and population mean</h3><div style="position:relative;height:240px"><canvas id="c2"></canvas></div></div>
+<div class="card"><h3>Champion failure modes: boulder hits, timeouts</h3><div style="position:relative;height:240px"><canvas id="c3"></canvas></div></div>
+<div class="card"><h3>World: wind, turbulence, support (training wheels)</h3><div style="position:relative;height:240px"><canvas id="c4"></canvas></div></div>
+<div class="card"><h3>Network size and species</h3><div style="position:relative;height:240px"><canvas id="c5"></canvas></div></div>
+<div class="card"><h3>Seconds per generation</h3><div style="position:relative;height:240px"><canvas id="c6"></canvas></div></div>
 <div class="card" style="grid-column:1/-1"><h3>Events (newest first)</h3><div class="ev" id="ev"></div></div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
