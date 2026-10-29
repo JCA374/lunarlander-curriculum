@@ -70,41 +70,51 @@ def test_seed_hidden_nodes_are_never_deleted():
 
 
 def test_smoke_train_then_resume(tmp_path):
-    """Two generations, stop, resume: the generation counter and population carry on."""
-    mlp = MLP(13, 4)
+    """Train, SIGTERM after 3 generations, resume: the generation counter carries on from the checkpoint."""
+    import pickle, shutil, time
     seed = tmp_path / 'seed.json'
-    seed.write_text(json.dumps(mlp.to_dict()))
+    seed.write_text(json.dumps(MLP(13, 4).to_dict()))
     cur = tmp_path / 'c.json'
     cur.write_text(json.dumps({'name': 't', 'stages': [
-        {'name': 'a', 'world': {'wind': 0, 'turbulence': 0}, 'cap': 100, 'pass': {'landed': 2}}]}))
+        {'name': 'a', 'world': {'wind': 0, 'turbulence': 0}, 'cap': 1000, 'pass': {'landed': 2}}]}))
     cfg = tmp_path / 'cfg.ini'
     cfg.write_text(open(os.path.join(ROOT, 'neat-config.ini')).read().replace('pop_size              = 120', 'pop_size = 8'))
     run = f'test_{os.getpid()}'
-    base = [sys.executable, 'train.py', '--curriculum', str(cur), '--run', run, '--config', str(cfg),
-            '--seed-net', str(seed), '--workers', '2', '--flights', '2', '--reeval-top', '2', '--reeval-flights', '2',
-            '--check-every', '1', '--check-flights', '3']
+    rdir = os.path.join(ROOT, 'runs', run)
+    cmd = [sys.executable, 'train.py', '--curriculum', str(cur), '--run', run, '--config', str(cfg),
+           '--seed-net', str(seed), '--workers', '2', '--flights', '2', '--reeval-top', '2', '--reeval-flights', '2',
+           '--check-every', '1', '--check-flights', '3']
+
+    def rows():
+        try:
+            return open(os.path.join(rdir, 'stats.csv')).read().splitlines()[1:]
+        except FileNotFoundError:
+            return []
+
+    def run_until(n_rows):
+        p = subprocess.Popen(cmd, cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        try:
+            t0 = time.time()
+            while len(rows()) < n_rows and time.time() - t0 < 120:
+                time.sleep(0.2)
+            p.terminate()
+            p.wait(120)
+        finally:
+            if p.poll() is None:
+                p.kill()
+
     try:
-        p = subprocess.Popen(base, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        lines = []
-        for line in p.stdout:
-            lines.append(line)
-            if sum(l.startswith('gen ') for l in lines) >= 3:
-                p.terminate()
-        p.wait(60)
-        st = os.path.join(ROOT, 'runs', run, 'checkpoint.pkl')
-        assert os.path.exists(st)
-        import pickle
-        gen = pickle.load(open(st, 'rb'))['state']['gen']
+        run_until(3)
+        gen = pickle.load(open(os.path.join(rdir, 'checkpoint.pkl'), 'rb'))['state']['gen']
         assert gen >= 3
-        p = subprocess.Popen(base, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        first = None
-        for line in p.stdout:
-            if line.startswith('gen '):
-                first = int(line.split()[1])
-                p.terminate()
-                break
-        p.wait(60)
-        assert first == gen
+        before = len(rows())
+        assert before == gen                       # one stats row per finished generation
+        run_until(before + 1)
+        assert int(rows()[before].split(',')[0]) == gen    # the resumed run's first generation
     finally:
-        import shutil
-        shutil.rmtree(os.path.join(ROOT, 'runs', run), ignore_errors=True)
+        shutil.rmtree(rdir, ignore_errors=True)
+
+
+def test_steady_push_follows_the_wind_ramp():
+    env = make_env()
+    assert Flight(env, 5, World(wind=5, steady=1.0)).push * 3 == pytest.approx(Flight(env, 5, World(wind=15, steady=1.0)).push)

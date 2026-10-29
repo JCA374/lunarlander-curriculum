@@ -121,7 +121,8 @@ class Flight:
         u.wind_power = world.wind * (1 - world.steady)
         u.turbulence_power = world.turbulence * (1 - world.steady)
         u.enable_wind = (world.wind > 0 or world.turbulence > 0) and world.steady < 1
-        self.push = world.steady * steady_push(seed) if world.steady else 0.0
+        # the push scales with the stage's wind, so a wind ramp also ramps the steady push
+        self.push = world.steady * steady_push(seed) * world.wind / WIND_POWER if world.steady else 0.0
         _remove_boulder(env)
         self.obs, _ = env.reset(seed=self.seed)
         self.boulder = boulder_spec(seed) if world.boulder else None
