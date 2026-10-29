@@ -118,3 +118,8 @@ def test_smoke_train_then_resume(tmp_path):
 def test_steady_push_follows_the_wind_ramp():
     env = make_env()
     assert Flight(env, 5, World(wind=5, steady=1.0)).push * 3 == pytest.approx(Flight(env, 5, World(wind=15, steady=1.0)).push)
+
+
+def test_boulder_size_ramp_scales_only_the_radius():
+    a, b = boulder_spec(42), boulder_spec(42, 0.4)
+    assert a[:2] == b[:2] and b[2] == pytest.approx(0.4 * a[2])

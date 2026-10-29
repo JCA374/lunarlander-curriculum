@@ -36,6 +36,7 @@ class World:
     steady: float = 0.0                   # 0..1: share of the wind replaced by one constant push (curriculum)
     boulder: bool = False                 # a boulder on the approach
     support: float = 0.0                  # training wheels: a stabilising torque, 1 = full, 0 = off
+    boulder_size: float = 1.0             # curriculum: boulder radius as a share of its full size
 
     def as_dict(self):
         return asdict(self)
@@ -63,7 +64,7 @@ def steady_push(seed):
     return float(rng.choice([-1.0, 1.0]) * rng.uniform(0.3, 1.0) * WIND_POWER)
 
 
-def boulder_spec(seed):
+def boulder_spec(seed, size=1.0):
     """Where the boulder is for this seed: centre (metres) and radius. It floats on the approach,
     1.6-2.6 m wide, its centre 3-7 m above the pad and up to 2.5 m to either side of the middle, so it
     often sits right on the straight line down."""
@@ -71,7 +72,7 @@ def boulder_spec(seed):
     r = float(rng.uniform(0.8, 1.3))
     x = float(W / 2 + rng.uniform(-2.5, 2.5))
     y = float(PAD_Y + rng.uniform(3.0, 7.0))
-    return x, y, r
+    return x, y, r * size
 
 
 # Drift sensor: the wind shows in the observations as a change in the horizontal velocity. The sensor
@@ -125,7 +126,7 @@ class Flight:
         self.push = world.steady * steady_push(seed) * world.wind / WIND_POWER if world.steady else 0.0
         _remove_boulder(env)
         self.obs, _ = env.reset(seed=self.seed)
-        self.boulder = boulder_spec(seed) if world.boulder else None
+        self.boulder = boulder_spec(seed, world.boulder_size) if world.boulder else None
         if self.boulder:
             _add_boulder(env, *self.boulder)
         self.sensor = DriftSensor()
