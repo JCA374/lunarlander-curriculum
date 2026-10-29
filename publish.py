@@ -125,7 +125,9 @@ def build():
 
 def push():
     os.chdir(ROOT)
-    subprocess.run(['git', 'add', 'docs', 'experiments/journal.jsonl', 'results'], check=False)
+    for f in ['docs', 'experiments/journal.jsonl', 'results']:
+        if os.path.exists(f):
+            subprocess.run(['git', 'add', f])
     for f in glob.glob('runs/*/stats.csv') + glob.glob('runs/*/events.jsonl') + glob.glob('runs/*/curriculum.json') \
             + glob.glob('runs/*/champions/*.pkl'):
         if '/test_' not in f:
@@ -133,7 +135,7 @@ def push():
     if subprocess.run(['git', 'diff', '--cached', '--quiet']).returncode == 0:
         return print('nothing to publish')
     subprocess.run(['git', 'commit', '-q', '-m', f'Site update {time.strftime("%Y-%m-%d %H:%M")}'], check=True)
-    subprocess.run(['git', 'pull', '-q', '--rebase'], check=False)
+    subprocess.run(['git', 'pull', '-q', '--rebase', '--autostash'], check=False)
     subprocess.run(['git', 'push', '-q'], check=False)
 
 

@@ -3,14 +3,14 @@ import sys, collections
 from multiprocessing import Pool
 import numpy as np
 from lander.env import World, run_episode, make_env
-from lander.teacher import Teacher
+from lander.teacher import Teacher, load_params
 
 WORLDS = {'calm': World(wind=0, turbulence=0), 'wind15+turb': World(), 'goal(boulder)': World(boulder=True),
           'calm+boulder': World(wind=0, turbulence=0, boulder=True)}
 
 def fly(args):
     name, seed, p = args
-    return name, run_episode(Teacher(p), seed, WORLDS[name])
+    return name, run_episode(Teacher(p or load_params()), seed, WORLDS[name])
 
 if __name__ == '__main__':
     n = int(sys.argv[1]) if len(sys.argv) > 1 else 200
