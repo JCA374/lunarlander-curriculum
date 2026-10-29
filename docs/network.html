@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lander Network</title>
+<meta name="description" content="The lander's neural network explained with live examples: what every part does, how it was cloned from a pilot, and how NEAT has evolved it.">
+<link rel="stylesheet" href="style.css">
+<style>
+  .net-svg { width: 100%; height: auto; display: block; }
+  .net-svg text { font: 11px system-ui, sans-serif; fill: var(--ink); }
+  .net-svg .lbl-muted { fill: var(--muted); }
+  .controls { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; margin: 8px 0; font-size: .9rem; }
+  .controls label { display: flex; align-items: center; gap: 6px; }
+  .pill { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 99px; padding: 4px 12px; cursor: pointer; font: inherit; font-size: .85rem; }
+  .pill.on, .pill:hover { border-color: var(--accent); color: var(--accent); }
+  .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+  @media (max-width: 760px) { .two { grid-template-columns: 1fr; } }
+  .sliders { display: grid; grid-template-columns: max-content 1fr 52px; gap: 3px 10px; align-items: center; font-size: .85rem; }
+  .sliders input[type=range] { width: 100%; }
+  .sliders .val { font-variant-numeric: tabular-nums; text-align: right; }
+  .bars { display: grid; grid-template-columns: max-content 1fr 64px; gap: 6px 10px; align-items: center; font-size: .9rem; }
+  .bar { height: 16px; background: var(--code); border-radius: 4px; position: relative; overflow: hidden; }
+  .bar > i { position: absolute; top: 0; bottom: 0; background: var(--accent); }
+  .bar.win > i { background: var(--good); }
+  .action-big { font-size: 1.5rem; font-weight: 650; margin: 8px 0; }
+  table.tbl { border-collapse: collapse; width: 100%; font-size: .85rem; font-variant-numeric: tabular-nums; }
+  table.tbl th, table.tbl td { border-bottom: 1px solid var(--line); padding: 4px 6px; text-align: right; }
+  table.tbl th:first-child, table.tbl td:first-child { text-align: left; }
+  .scroll { overflow-x: auto; }
+  .box { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin: 12px 0; }
+  .note { border-left: 3px solid var(--accent); padding: 6px 12px; background: var(--band); border-radius: 0 8px 8px 0; margin: 12px 0; }
+  .warn { border-left-color: var(--warn); }
+  canvas { max-width: 100%; }
+  .toc { columns: 2; font-size: .92rem; }
+  @media (max-width: 600px) { .toc { columns: 1; } }
+  details { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 14px; margin: 8px 0; }
+  details summary { cursor: pointer; font-weight: 600; }
+  pre { background: var(--code); padding: 10px 12px; border-radius: 8px; overflow-x: auto; font-size: .82rem; line-height: 1.45; }
+  .kbd { font-family: ui-monospace, monospace; background: var(--code); padding: 0 5px; border-radius: 4px; }
+  .mini { display: flex; gap: 12px; flex-wrap: wrap; }
+  .mini > div { flex: 1 1 260px; min-width: 0; }
+</style>
+</head>
+<body>
+<nav class="top"><a class="brand" href="index.html">🌙 Lander Curriculum</a>
+  <a href="index.html">Log</a><a href="network.html" class="on">Network</a><a href="lessons.html">Lessons</a><a href="podcast/index.html">Podcast</a>
+  <a href="https://github.com/JCA374/lunarlander-curriculum">Code</a></nav>
+<main>
+<h1>The network: what it is, how it thinks, how it evolved</h1>
+<p class="lede">The lander is flown by a small neural network: 15 numbers in, 4 scores out, every step, 50 times a second.
+This page takes it apart with live examples drawn from the real, current champion. Everything on the page is computed
+in your browser from the actual weights, so you can poke at it.</p>
+<p class="muted" id="meta"></p>
+
+<div class="box">
+<b>On this page</b>
+<ol class="toc">
+  <li><a href="#picture">The network in one picture</a></li>
+  <li><a href="#inputs">The 15 inputs, one by one</a></li>
+  <li><a href="#neuron">One neuron, by hand</a></li>
+  <li><a href="#tanh">The squashing curve (and the bug it caused)</a></li>
+  <li><a href="#try">Try it: move the inputs, watch the decision</a></li>
+  <li><a href="#flight">Watching it think, step by step</a></li>
+  <li><a href="#clone">Where it came from: copying a pilot</a></li>
+  <li><a href="#neat">How NEAT changes a network</a></li>
+  <li><a href="#evolved">How this network has evolved</a></li>
+  <li><a href="#quiz">Check yourself: a short quiz</a></li>
+</ol>
+</div>
+
+<!-- 1 -->
+<section id="picture">
+<h2>1. The network in one picture</h2>
+<p>On the left are the <b>inputs</b>, the 15 numbers the lander senses. On the right are the <b>outputs</b>: one score for
+each of the four things it can do (nothing, fire the left engine, the main engine, or the right engine). The highest score wins.
+In between are the <b>hidden neurons</b>. Each line is a <b>connection</b> with a <b>weight</b>: blue lines push the next
+neuron up (positive weight), red lines push it down (negative weight). Thicker means stronger.</p>
+<div class="controls">
+  <span>Show:</span>
+  <button class="pill on" data-net="newest">newest champion</button>
+  <button class="pill" data-net="seed">start network (the copy of the pilot)</button>
+  <button class="pill" data-net="diff">what changed since the start</button>
+  <label>hide weak lines below <input type="range" id="thr" min="0" max="3" step="0.05" value="0.6"> <span id="thrv">0.6</span></label>
+</div>
+<div class="box"><svg id="netsvg" class="net-svg" viewBox="0 0 900 620" role="img" aria-label="network diagram"></svg></div>
+<p class="muted small" id="netcap"></p>
+<div class="note">Hover over (or tap) a neuron to see only its connections and its bias. In "what changed" mode, the line
+colour shows how much each weight moved since the start: <b style="color:var(--good)">green</b> grew, <b style="color:var(--warn)">orange</b> shrank,
+and dashed lines are connections evolution <i>added</i>.</div>
+</section>
+
+<!-- 2 -->
+<section id="inputs">
+<h2>2. The 15 inputs, one by one</h2>
+<p>A neural network only knows what it's told. These are the numbers it gets every step. The first eight come straight from the
+game; the other seven are <b>sensors</b> computed from them, because the earlier wind project showed that <i>what the network senses
+matters more than how big it is</i>. The last column shows the values at one real moment of a flight (pick it in section 6).</p>
+<div class="box scroll"><table class="tbl" id="intable"></table></div>
+<details><summary>How the drift sensor works, with numbers</summary>
+<p>Wind isn't one of the inputs. The lander has to notice it. Each step the sensor looks at how much the sideways speed changed,
+skipping steps where a side engine fired (that push would hide the wind):</p>
+<pre>change   = vx(now) − vx(before)             e.g. 0.0091 − 0.0000 = 0.0091
+scaled   = change / (0.0008 × 15)           = 0.0091 / 0.012 = 0.76   (1.0 ≈ a full-strength gust)
+drift    = drift + 0.15 × (scaled − drift)  = 0 + 0.15 × (0.76 − 0) = 0.114
+next step, same push:                       0.114 + 0.15 × (0.76 − 0.114) = 0.211 … and so on toward 0.76</pre>
+<p>That last line is a <i>running average</i>: each step it moves 15% of the way toward the newest reading, so one noisy step
+can't fool it, and a steady push shows up within about 10 steps (a fifth of a second).</p>
+</details>
+<details><summary>How the two route sensors work</summary>
+<p><b>waypoint_dx</b> answers "how far am I from where I should be heading?". Normally that's the pad centre, so it equals x. But if a
+boulder is in the way and the lander is still above it, the waypoint moves to a point just beside the boulder, on the side the
+lander is already on. Once the lander is below the boulder, the waypoint snaps back to the pad.</p>
+<p><b>above_boulder</b> answers "how much height do I have to spare?". While the lander is horizontally over the boulder, it's the height
+above the boulder's top (plus a margin). Elsewhere it's 0. A negative value means danger: you are lower than the top of a rock you are over.</p>
+<p>Both are computed from the other inputs with a few lines of fixed code. They don't add information; they <i>re-express</i> it, so that
+"go beside it, stay above it" becomes a straight-line rule a small network can learn, instead of a sharp if-then switch.</p>
+</details>
+</section>
+
+<!-- 3 -->
+<section id="neuron">
+<h2>3. One neuron, by hand</h2>
+<p>Every hidden neuron does the same small job: <b>multiply each input by its weight, add them up, add a bias, squash</b>.
+Here is the busiest hidden neuron of the newest champion (the one with the strongest connections to the outputs), worked out for the moment
+chosen in section 6. You could do this with a calculator.</p>
+<div class="box scroll" id="byhand"></div>
+<p>Then each output adds up the hidden neurons the same way (without squashing, see the next section), and the biggest output wins:</p>
+<div class="box scroll" id="byhand2"></div>
+</section>
+
+<!-- 4 -->
+<section id="tanh">
+<h2>4. The squashing curve (and the bug it caused)</h2>
+<p>Hidden neurons pass their sum through <b>tanh</b>, an S-shaped curve that maps any number into the range −1 to +1. NEAT's version
+is <span class="kbd">tanh(2.5 × z)</span>: steeper than the textbook one. Without a squash like this, stacking neurons would add nothing:
+a sum of sums is still just a sum, a straight line. The bend is what lets a network make decisions like "if drifting <i>and</i> low, then…".</p>
+<div class="two">
+  <div class="box"><canvas id="tanhc" width="420" height="250"></canvas></div>
+  <div class="box">
+    <b>The flat ends are a trap.</b>
+    <table class="tbl" style="margin-top:8px">
+      <tr><th>score z</th><th>tanh(2.5 z)</th></tr>
+      <tr><td>0.2</td><td>0.462</td></tr><tr><td>0.5</td><td>0.848</td></tr><tr><td>1</td><td>0.987</td></tr>
+      <tr><td>3</td><td>0.99999939</td></tr><tr><td>9.5</td><td>1.0 (exactly, in the computer)</td></tr><tr><td>14.5</td><td>1.0 (exactly)</td></tr>
+    </table>
+  </div>
+</div>
+<div class="note warn"><b>The bug, 29 October.</b> The copied pilot network gave the actions scores like <i>main engine 14.5,
+left engine 9.5</i>. NEAT's output neurons used tanh too, and both became exactly 1.0: a tie. The computer then picked the
+<i>first</i> of the tied actions (left engine), not the best one (main engine). About 1 step in 9 went wrong, so the copy that
+NEAT started from landed only 43% in wind instead of 92%. The fix: the output neurons now use no squash at all (the identity),
+so the scores pass through unchanged. Runs A, B and C started from the broken copy; run D from the exact one.</div>
+</section>
+
+<!-- 5 -->
+<section id="try">
+<h2>5. Try it: move the inputs, watch the decision</h2>
+<p>Pick a real moment from a flight, then drag any input and watch the four scores, and the chosen action, change. This runs the newest
+champion's actual weights. Things to try: start from "The start" and drag <b>vx</b> (sideways speed) to the right: when does it begin to
+fire the right engine? Drag <b>drift</b> and see the lander lean into the wind before it has picked up any speed.</p>
+<div class="controls" id="presetbtns"></div>
+<p class="muted small" id="presetwhy"></p>
+<div class="two">
+  <div class="box"><div class="sliders" id="sliders"></div></div>
+  <div class="box">
+    <div class="muted small">chosen action</div>
+    <div class="action-big" id="action">–</div>
+    <div class="bars" id="outbars"></div>
+    <p class="muted small" style="margin-top:12px">Hidden neurons (−1 … +1):</p>
+    <canvas id="hidbars" width="420" height="90"></canvas>
+  </div>
+</div>
+</section>
+
+<!-- 6 -->
+<section id="flight">
+<h2>6. Watching it think, step by step</h2>
+<p>This is one complete flight of the newest champion in the final world (wind 15, turbulence 1.5, boulder), recorded step by step.
+Drag the slider to move through time. The left panel shows where the lander is; the right panel shows every hidden neuron's value
+over the whole flight (one row per neuron, one column per step; orange is positive, blue negative). The strip underneath shows which action
+it chose at every step.</p>
+<div class="controls"><label>step <input type="range" id="tslider" min="0" max="10" value="0" style="width:260px"></label> <span id="tlabel"></span>
+  <button class="pill" id="play">▶ play</button></div>
+<div class="two">
+  <div class="box"><canvas id="pathc" width="420" height="300"></canvas></div>
+  <div class="box"><canvas id="heat" width="420" height="300"></canvas></div>
+</div>
+<p>Things to notice: some neurons switch sharply at particular moments (passing the boulder, the first touch) while others drift slowly with the
+wind. Neurons that barely change all flight are doing little in this flight; they might matter in others. The network diagram in section 1
+and the "one neuron by hand" example in section 3 follow the step you pick here.</p>
+</section>
+
+<!-- 7 -->
+<section id="clone">
+<h2>7. Where it came from: copying a pilot</h2>
+<p>NEAT usually starts from tiny networks with no hidden neurons and builds up. In the earlier wind project, it never built much: the
+best network stayed linear (no hidden neurons) and stalled at 91% landed. So this project gives evolution a head start.</p>
+<p><b>Step 1, a pilot by hand.</b> A short rule-based controller (in <a href="https://github.com/JCA374/lunarlander-curriculum/blob/main/lander/teacher.py">teacher.py</a>).
+Its heart is a few lines like these:</p>
+<pre>aim       = beside the boulder if it's in the way, else the pad
+lean      = 2.20 × (x − aim) + 2.01 × vx + 0.27 × drift      (capped at ±0.41)
+height    = keep at least 1.07 × |x − aim| (and above the boulder top while over it)
+if needing to climb more than to turn → main engine
+elif leaning too far one way          → the opposite side engine</pre>
+<p>The numbers (2.20, 2.01, …) were tuned by another optimiser (CMA-ES) over 40 rounds of 16 candidates × 160 flights. Tuned, the pilot
+landed 100% in calm air, 93.8% in full wind, 74.2% with the boulder (500 unseen flights each).</p>
+<p><b>Step 2, copy it into a network: behavioural cloning.</b> Record the pilot flying (about 170,000 steps), and train a network with
+24 hidden neurons to predict the pilot's action from the 15 inputs. That's ordinary supervised learning, like teaching a network to
+recognise digits: here the "label" is the pilot's choice.</p>
+<p><b>Step 3, DAgger.</b> A pure copy has a weakness: it has only seen the pilot's good flights. When the copy makes a small mistake it
+lands in a situation the pilot never got into, and it has no idea what to do. DAgger fixes that: let the <i>copy</i> fly, and at every
+step ask the pilot "what would you do here?". Add those answers to the training set and train again. Six rounds of this.</p>
+<div class="box scroll"><table class="tbl">
+  <tr><th>DAgger round</th><th>steps in the training set</th><th>agreement with the pilot</th><th>copy landed afterwards (300 mixed-world flights)</th></tr>
+  <tr><td>13-input copy, round 0 (pilot's own flights only)</td><td>169,028</td><td>80.3%</td><td>64.3%</td></tr>
+  <tr><td>round 1</td><td>339,190</td><td>85.0%</td><td>84.0%</td></tr>
+  <tr><td>round 5</td><td>1,010,753</td><td>87.7%</td><td>81.7%</td></tr>
+  <tr><td>13-input copy, final</td><td>1,176,512</td><td>88.3%</td><td>—</td></tr>
+  <tr><td>15-input copy (with route sensors), final</td><td>1,194,361</td><td>95.4%</td><td>83.3% (after round 5)</td></tr>
+</table></div>
+<p>Note the jump from 88% to 95% agreement when the route sensors were added: the pilot's boulder rule became much easier to copy once the
+network was told where the waypoint is.</p>
+<p><b>Step 4, hand it to NEAT.</b> Every one of the 120 networks in NEAT's first generation is this copy, with tiny random changes
+(each weight nudged by about ±0.02). The 24 hidden neurons are <i>protected</i>: evolution may tune them and add new ones, but never delete them.
+(In the wind project's run K, evolution deleted every hidden neuron it was given within 400 generations.)</p>
+</section>
+
+<!-- 8 -->
+<section id="neat">
+<h2>8. How NEAT changes a network</h2>
+<p><b>NEAT</b> (NeuroEvolution of Augmenting Topologies, Stanley &amp; Miikkulainen, 2002) is evolution for neural networks. Each generation:</p>
+<ol>
+  <li>every network flies the same 10 training flights (the same seeds, so the comparison is fair) and gets a <b>fitness</b>: the game's score + 100 for landing between the flags + up to 50 for landing near the centre − 100 for running out of time;</li>
+  <li>networks are grouped into <b>species</b> of similar networks, so a new idea competes first with its own kind, not with the best of everything;</li>
+  <li>the best <span data-cfg="elitism"></span> of each species are copied unchanged (<b>elitism</b>), the top <span data-cfg="survival_threshold" data-pct></span> become parents, and the rest are replaced by children made by <b>crossover</b> and <b>mutation</b>.</li>
+</ol>
+<p>Here is what each kind of change does, with an example. The probabilities are this run's actual settings.</p>
+
+<div class="mini">
+<div class="box"><b>Weight nudge</b> (each weight, <span data-cfg="weight_mutate_rate" data-pct></span> chance per child)
+<svg viewBox="0 0 260 90" class="net-svg"><circle cx="40" cy="45" r="14" fill="var(--code)" stroke="var(--muted)"/><text x="34" y="49">A</text>
+<circle cx="220" cy="45" r="14" fill="var(--code)" stroke="var(--muted)"/><text x="214" y="49">B</text>
+<line x1="54" y1="45" x2="206" y2="45" stroke="var(--accent)" stroke-width="3"/><text x="88" y="35">0.84 → 0.84 + 0.03 = 0.87</text></svg>
+<p class="small">Add a small random number (spread <span data-cfg="weight_mutate_power"></span>). Most of evolution's work is this: fine-tuning. Rarely (<span data-cfg="weight_replace_rate" data-pct></span>) a weight is replaced with a fresh random value.</p></div>
+<div class="box"><b>Add a neuron</b> (<span data-cfg="node_add_prob" data-pct></span> chance per child)
+<svg viewBox="0 0 260 90" class="net-svg"><circle cx="30" cy="45" r="13" fill="var(--code)" stroke="var(--muted)"/><text x="25" y="49">A</text>
+<circle cx="130" cy="45" r="13" fill="var(--good)"/><text x="122" y="49">N</text>
+<circle cx="230" cy="45" r="13" fill="var(--code)" stroke="var(--muted)"/><text x="225" y="49">B</text>
+<line x1="43" y1="45" x2="117" y2="45" stroke="var(--accent)" stroke-width="2"/><line x1="143" y1="45" x2="217" y2="45" stroke="var(--accent)" stroke-width="3"/>
+<line x1="43" y1="75" x2="217" y2="75" stroke="var(--muted)" stroke-dasharray="4 3"/><text x="70" y="38">1.0</text><text x="170" y="38">0.84</text><text x="80" y="88" class="lbl-muted">old A→B (0.84) switched off</text></svg>
+<p class="small">An existing connection is split in two, with a new neuron in the middle. The new path starts out doing nearly what the old one did, so the network isn't broken, but now there's a bend (the tanh) that evolution can exploit.</p></div>
+<div class="box"><b>Add a connection</b> (<span data-cfg="conn_add_prob" data-pct></span> chance per child)
+<svg viewBox="0 0 260 90" class="net-svg"><circle cx="40" cy="25" r="12" fill="var(--code)" stroke="var(--muted)"/><text x="30" y="29">x</text>
+<circle cx="40" cy="70" r="12" fill="var(--code)" stroke="var(--muted)"/><text x="31" y="74">drift</text>
+<circle cx="220" cy="45" r="13" fill="var(--code)" stroke="var(--muted)"/><text x="214" y="49">H7</text>
+<line x1="52" y1="27" x2="207" y2="43" stroke="var(--accent)" stroke-width="2"/><line x1="52" y1="68" x2="207" y2="48" stroke="var(--good)" stroke-width="2" stroke-dasharray="5 3"/><text x="96" y="82">new: drift → H7, weight 0.12</text></svg>
+<p class="small">Wire two unconnected neurons together, starting with a small random weight. In the start network every input already feeds every hidden neuron, so new connections mostly go input → output directly, or to and from new neurons.</p></div>
+<div class="box"><b>Delete</b> (neuron <span data-cfg="node_delete_prob" data-pct></span>, connection <span data-cfg="conn_delete_prob" data-pct></span>)
+<p class="small">The opposite moves. This keeps networks from growing without limit: extra parts only survive if they pay for themselves. Here the 24 original hidden neurons can't be deleted.</p></div>
+</div>
+
+<div class="box"><b>Crossover: how two parents make a child.</b> Every connection gene has an identity (which neuron to which neuron). Genes
+the parents share are lined up and the child takes each one from a random parent; genes only one parent has come from the fitter parent.
+<div class="scroll"><table class="tbl" style="margin-top:8px">
+<tr><th>gene</th><th>parent 1 (fitter)</th><th>parent 2</th><th>child</th></tr>
+<tr><td>x → H3</td><td>0.84</td><td>0.80</td><td>0.80 (coin flip)</td></tr>
+<tr><td>drift → H3</td><td>−1.20</td><td>−1.31</td><td>−1.20 (coin flip)</td></tr>
+<tr><td>H3 → main</td><td>2.10</td><td>2.05</td><td>2.05 (coin flip)</td></tr>
+<tr><td>vx → N28 (new neuron)</td><td>0.30</td><td>—</td><td>0.30 (only in the fitter parent)</td></tr>
+<tr><td>y → right</td><td>—</td><td>0.15</td><td>— (only in the weaker parent: dropped)</td></tr>
+</table></div>
+<p class="small">This works here because every network descends from the same start, so the gene identities line up. That's also why the start
+network's neurons keep the same numbers (4 to 27) in every genome.</p></div>
+
+<div class="box"><b>Species: how different are two networks?</b> NEAT's distance between two genomes:
+<pre>distance = c1 × (genes only one of them has) / (genes in the bigger genome)  +  c2 × (average weight difference on shared genes)
+         = <span data-cfg="compatibility_disjoint_coefficient"></span> × 6 / 470   (an example pair)  +  <span data-cfg="compatibility_weight_coefficient"></span> × 0.21  =  0.013 + 0.105  =  0.118</pre>
+<p class="small">If the distance is below <span data-cfg="compatibility_threshold"></span>, they're the same species. Each species shares its fitness among its
+members, so one huge species can't take over the whole population, and a species that doesn't improve for <span data-cfg="max_stagnation"></span>
+generations is removed. Because every network here starts from the same copy, there are usually just one to three species.</p></div>
+
+<div class="note"><b>Why so gentle?</b> Stock NEAT nudges 80% of weights by about ±0.5 per child. That's fine for a tiny network still searching for
+any solution. For a trained network it's a wrecking ball: nudging the start network's weights by just ±0.05 cost about 10 points of landing
+rate with the boulder. So this run nudges <span data-cfg="weight_mutate_rate" data-pct></span> of weights by about ±<span data-cfg="weight_mutate_power"></span>.</div>
+</section>
+
+<!-- 9 -->
+<section id="evolved">
+<h2>9. How this network has evolved</h2>
+<p>Each generation's champion (the best network after re-flying the top few on extra flights) is archived whenever it sets a new best on a fresh check or passes a stage.
+The table lists them all: how well they did, how big they were, and how far they had drifted from the start network.</p>
+<div class="box"><canvas id="sizec" height="240"></canvas></div>
+<p class="muted small">Network size of each generation's champion. A flat line means evolution is tuning weights, not adding structure.</p>
+<div class="box scroll"><table class="tbl" id="champtable"></table></div>
+<div class="box"><canvas id="driftc" height="220"></canvas></div>
+<p class="muted small">Average weight change since the start network, per archived champion (on the connections the start network already had).</p>
+<div class="note"><b>How to read this.</b> If the average weight change stays small while the landing rate climbs, evolution is <i>polishing</i> the
+pilot's copy. Big jumps in weight change, or new neurons that survive several generations, mean evolution found something the pilot didn't
+have. New neurons that come and go are experiments that didn't pay off.</div>
+</section>
+
+<!-- 10 -->
+<section id="quiz">
+<h2>10. Check yourself</h2>
+<details><summary>1. The network outputs four scores: −0.2, 3.1, 3.4, 1.0. What does the lander do?</summary>
+<p>It fires the <b>main engine</b> (the third score, 3.4, is the biggest). Only the order matters, not the size: 3.4 vs 3.1 is enough.</p></details>
+<details><summary>2. Why give the network a drift sensor instead of a bigger network?</summary>
+<p>Because the wind isn't in the observations at all; only its effect (a change in speed) is, and noticing a change needs memory of the step before.
+A feed-forward network has no memory. The sensor does the remembering for it. Earlier NEAT runs without it stalled near 85%.</p></details>
+<details><summary>3. A hidden neuron's inputs sum to 0.6 and its bias is −0.2. What does it output?</summary>
+<p>tanh(2.5 × (0.6 − 0.2)) = tanh(1.0) ≈ <b>0.76</b>.</p></details>
+<details><summary>4. Why did the tanh on the outputs break the copied network?</summary>
+<p>Large scores (9.5 and 14.5) both squash to exactly 1.0, a tie, and the first tied action won instead of the best one.</p></details>
+<details><summary>5. What does DAgger add over plain copying?</summary>
+<p>It trains on the situations the <i>copy</i> gets itself into (with the pilot's answer for each), not just the ones the pilot visits.
+So the copy learns to recover from its own mistakes.</p></details>
+<details><summary>6. NEAT "adds a neuron" by splitting a connection with weight 0.84. What are the two new weights, and why?</summary>
+<p>1.0 into the new neuron and 0.84 out of it. The network then behaves almost the same as before (the tanh bends it a little), so the mutation
+doesn't wreck a working network, but evolution now has a new bend to work with.</p></details>
+<details><summary>7. Why are the 24 starting neurons protected from deletion?</summary>
+<p>In the wind project, evolution deleted every hidden neuron it was given within 400 generations, and ended up with a linear network
+stuck at 91%. Protecting them keeps the pilot's knowledge in place while evolution tunes it.</p></details>
+</section>
+</main>
+<footer>Lander Curriculum · computed in your browser from <code>data/network.json</code>, regenerated with every site update.</footer>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="network.js"></script>
+</body>
+</html>

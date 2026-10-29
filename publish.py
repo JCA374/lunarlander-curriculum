@@ -123,6 +123,15 @@ def build():
         json.dump(obj, open(os.path.join(DATA, f'{name}.json'), 'w'), separators=(',', ':'))
 
 
+def network_data():
+    """The Network tab's data (make_network_data.py), for the newest run that has champions."""
+    runs = [d for d in sorted(glob.glob(os.path.join(ROOT, 'runs', '*')), key=os.path.getmtime)
+            if glob.glob(os.path.join(d, 'champions', '*.pkl')) and not os.path.basename(d).startswith('test_')]
+    if runs:
+        subprocess.run([os.path.join(ROOT, '.venv', 'bin', 'python'), os.path.join(ROOT, 'make_network_data.py'),
+                        '--run', os.path.basename(runs[-1])], cwd=ROOT)
+
+
 def push():
     os.chdir(ROOT)
     for f in ['docs', 'experiments/journal.jsonl', 'results']:
@@ -144,5 +153,6 @@ if __name__ == '__main__':
     ap.add_argument('--push', action='store_true')
     a = ap.parse_args()
     build()
+    network_data()
     if a.push:
         push()
