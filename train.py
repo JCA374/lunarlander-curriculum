@@ -55,6 +55,21 @@ def fly_genome(args):
     return [shape(run_episode(pol, s, world, env=_W['env']), reward) for s in seeds]
 
 
+def fly_many(pool, jobs, chunk=10):
+    """Fly [(genome, seeds, world, reward), ...] with every job split into chunks of `chunk` seeds, so all workers stay
+    busy even when there are fewer jobs than workers (8 genomes re-flown on 60 seeds = 48 tasks, not 8).
+    Returns one result list per job, in order."""
+    tasks, owner = [], []
+    for j, (g, seeds, world, reward) in enumerate(jobs):
+        for k in range(0, len(seeds), chunk):
+            tasks.append((g, seeds[k:k + chunk], world, reward))
+            owner.append(j)
+    out = [[] for _ in jobs]
+    for j, rs in zip(owner, pool.map(fly_genome, tasks, chunksize=1)):
+        out[j] += rs
+    return out
+
+
 def shape(r, reward):
     """Training fitness for one flight: env score + landing bonus + centre bonus, a timeout penalty,
     an extra boulder-hit penalty and a small clearance bonus (all set per stage)."""
@@ -176,7 +191,7 @@ class Run:
         # re-fly the top genomes on fresh selection seeds; champion = best average over all its flights
         top = sorted(zip(genomes, res), key=lambda z: -z[0][1].fitness)[:a.reeval_top]
         sel_seeds = [SELECT + st['gen'] * 1000 + i for i in range(a.reeval_flights)]
-        more = self.pool.map(fly_genome, [(g, sel_seeds, world, reward) for (_, g), _ in top], chunksize=1)
+        more = fly_many(self.pool, [(g, sel_seeds, world, reward) for (_, g), _ in top])
         scored = [(summarise(rs + m), g) for ((_, g), rs), m in zip(top, more)]
         champ_s, champ = max(scored, key=lambda z: z[0]['fitness'])
         fits = [g.fitness for _, g in genomes]
@@ -234,8 +249,7 @@ class Run:
         st = self.state
         seeds = [CHECK + st['n_check'] * 1000 + i for i in range(self.a.check_flights)]
         st['n_check'] += 1
-        rs = self.pool.map(fly_genome, [(genome, [s], world, reward) for s in seeds], chunksize=5)
-        return summarise([r[0] for r in rs])
+        return summarise(fly_many(self.pool, [(genome, seeds, world, reward)], chunk=5)[0])
 
     @staticmethod
     def passes(chk, p):
