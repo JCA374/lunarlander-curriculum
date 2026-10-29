@@ -1,0 +1,5 @@
+gen,stage,stage_gen,wind,turbulence,steady,boulder,support,best,mean,champ_fit,champ_landed,champ_score,champ_timeout,champ_boulder,hidden,conns,species,check_landed,check_score,secs
+0,calm,0,0,0,0.0,0,0.0,383.6,353.9,386.3,1.0,238.5,0.0,0.0,24,408,1,0.99,234.9,71.2
+1,steady push,0,5.0,1.5,1.0,0,0.3,396.5,318.6,388.5,1.0,249.4,0.0,0.0,24,408,1,,,47.4
+2,steady push,1,5.138888888888889,1.5,1.0,0,0.296,403.1,333.4,399.7,1.0,259.3,0.0,0.0,24,405,1,,,35.0
+3,steady push,2,5.277777777777778,1.5,1.0,0,0.292,404.6,308.6,401.4,1.0,259.1,0.0,0.0,24,406,1,,,31.4
