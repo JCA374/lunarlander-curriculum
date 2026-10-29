@@ -91,7 +91,7 @@ def stage_world(stage, t):
 def check_world(stage):
     """The world a pass check flies: the final stage world, no support, no mixed-in boulders."""
     w = stage_world(stage, 1.0)
-    w.boulder_mix = 0.0
+    w.boulder_mix = w.goal_mix = 0.0
     return w
 
 

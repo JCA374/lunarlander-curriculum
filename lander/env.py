@@ -38,6 +38,7 @@ class World:
     support: float = 0.0                  # training wheels: a stabilising torque, 1 = full, 0 = off
     boulder_size: float = 1.0             # curriculum: boulder radius as a share of its full size
     boulder_mix: float = 0.0              # curriculum: share of flights that get a boulder anyway (keeps the skill)
+    goal_mix: float = 0.0                 # curriculum: share of flights flown in the full final world (rehearsal)
 
     def as_dict(self):
         return asdict(self)
@@ -137,6 +138,8 @@ class Flight:
     """One flight: env + world + seed. step(action) -> done. Used by run_episode and the hand controller."""
 
     def __init__(self, env, seed, world=World()):
+        if world.goal_mix and np.random.default_rng([int(seed), 19]).random() < world.goal_mix:
+            world = World(boulder=True, support=world.support)      # rehearsal: this flight is the real task
         self.env, self.seed, self.world = env, int(seed), world
         u = env.unwrapped
         seed_wind(env, seed)

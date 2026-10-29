@@ -1,0 +1,104 @@
+{
+ "name": "E",
+ "note": "Attempt E: the curriculum rebuilt around what the network can't do yet. Run D showed the easy stages destroy skill the exact copy already has (full wind: 90% at gen 0, 79% after calm air, 52% after the steady push; boulder 71% -> 38%), because selection only sees the easy world. So: start from the exact copy, train the weakness (the boulder) from calm air up to full wind, and fly 40% of every stage's training flights in the full final world (rehearsal) so nothing is forgotten.",
+ "stages": [
+  {
+   "name": "boulder, calm air",
+   "world": {
+    "wind": 0,
+    "turbulence": 0,
+    "boulder": true,
+    "goal_mix": 0.4
+   },
+   "ramp": {
+    "boulder_size": [
+     0.6,
+     1.0
+    ]
+   },
+   "ramp_frac": 0.5,
+   "cap": 150,
+   "reward": {
+    "landing_bonus": 100,
+    "timeout_penalty": 100,
+    "boulder_penalty": 50,
+    "clearance_bonus": 10
+   },
+   "pass": {
+    "landed": 0.95,
+    "boulder": 0.0
+   },
+   "expect": "The pilot lands 95.6% here. The copy should get there; selection now sees the boulder in every flight."
+  },
+  {
+   "name": "boulder, gusts",
+   "world": {
+    "turbulence": 0,
+    "boulder": true,
+    "goal_mix": 0.4
+   },
+   "ramp": {
+    "wind": [
+     5,
+     15
+    ]
+   },
+   "ramp_frac": 0.5,
+   "cap": 200,
+   "reward": {
+    "landing_bonus": 100,
+    "timeout_penalty": 100,
+    "boulder_penalty": 50,
+    "clearance_bonus": 10
+   },
+   "pass": {
+    "landed": 0.93,
+    "boulder": 0.0
+   },
+   "expect": "Steering around the boulder while gusts push sideways. Pass at 93%."
+  },
+  {
+   "name": "everything",
+   "world": {
+    "wind": 15,
+    "boulder": true,
+    "goal_mix": 0.4
+   },
+   "ramp": {
+    "turbulence": [
+     0.5,
+     1.5
+    ]
+   },
+   "ramp_frac": 0.5,
+   "cap": 250,
+   "reward": {
+    "landing_bonus": 100,
+    "timeout_penalty": 100,
+    "boulder_penalty": 50,
+    "clearance_bonus": 10
+   },
+   "pass": {
+    "landed": 0.95,
+    "boulder": 0.0
+   },
+   "expect": "The full final world. Start level with the pilot (~71-77%); aim to pass it."
+  },
+  {
+   "name": "polish",
+   "world": {
+    "boulder": true
+   },
+   "cap": 3000,
+   "flights": 16,
+   "reward": {
+    "landing_bonus": 100,
+    "timeout_penalty": 100
+   },
+   "pass": {
+    "landed": 0.98
+   },
+   "expect": "Everything on, only the env score + landing bonus. Pass = 98% on 100 + 100 fresh flights, then the 1,000-flight goal check."
+  }
+ ]
+}

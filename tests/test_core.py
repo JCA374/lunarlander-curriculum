@@ -132,3 +132,12 @@ def test_boulder_mix_and_check_world():
     n = sum(Flight(env, s, World(boulder_mix=0.3)).boulder is not None for s in range(300))
     assert 60 < n < 120
     assert check_world({'world': {'boulder_mix': 0.3}}).boulder_mix == 0.0
+
+
+def test_goal_mix_rehearses_the_full_task():
+    from train import check_world
+    env = make_env()
+    fl = [Flight(env, s, World(wind=0, turbulence=0, goal_mix=0.4)) for s in range(200)]
+    real = [f for f in fl if f.boulder is not None]
+    assert 50 < len(real) < 110 and all(f.world.wind == 15 and f.world.turbulence == 1.5 for f in real)
+    assert check_world({'world': {'goal_mix': 0.4}}).goal_mix == 0.0
