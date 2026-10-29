@@ -290,10 +290,10 @@ rate with the boulder. So this run nudges <span data-cfg="weight_mutate_rate" da
 <h2>9. How this network has evolved</h2>
 <p>Each generation's champion (the best network after re-flying the top few on extra flights) is archived whenever it sets a new best on a fresh check or passes a stage.
 The table lists them all: how well they did, how big they were, and how far they had drifted from the start network.</p>
-<div class="box"><canvas id="sizec" height="240"></canvas></div>
+<div class="box"><div style="position:relative;height:250px"><canvas id="sizec"></canvas></div></div>
 <p class="muted small">Network size of each generation's champion. A flat line means evolution is tuning weights, not adding structure.</p>
 <div class="box scroll"><table class="tbl" id="champtable"></table></div>
-<div class="box"><canvas id="driftc" height="220"></canvas></div>
+<div class="box"><div style="position:relative;height:250px"><canvas id="driftc"></canvas></div></div>
 <p class="muted small">Average weight change since the start network, per archived champion (on the connections the start network already had).</p>
 <div class="note"><b>How to read this.</b> If the average weight change stays small while the landing rate climbs, evolution is <i>polishing</i> the
 pilot's copy. Big jumps in weight change, or new neurons that survive several generations, mean evolution found something the pilot didn't
