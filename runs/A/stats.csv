@@ -1,0 +1,3 @@
+gen,stage,stage_gen,wind,turbulence,steady,boulder,support,best,mean,champ_fit,champ_landed,champ_score,champ_timeout,champ_boulder,hidden,conns,species,check_landed,check_score,secs
+0,calm,0,0,0,0.0,0,0.0,384.1,355.4,386.9,1.0,238.9,0.0,0.0,24,408,1,0.99,229.3,46.6
+1,calm,1,0,0,0.0,0,0.0,408.1,314.5,406.1,1.0,260.1,0.0,0.0,24,406,1,,,38.0
