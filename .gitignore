@@ -4,3 +4,5 @@ runs/
 *.log
 voice/*/audio/*.wav
 voice/*/.cache/
+runs/*/checkpoint.pkl*
+publish_loop.pid

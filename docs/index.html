@@ -1,5 +1,49 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lander Curriculum</title><style>:root{--bg:#fafaf7;--text:#1d1d1b;--muted:#6b6b66}@media (prefers-color-scheme:dark){:root{--bg:#15161a;--text:#e8e6e1;--muted:#9a988f}}
-body{background:var(--bg);color:var(--text);font:17px/1.6 system-ui,sans-serif;max-width:760px;margin:0 auto;padding:32px 16px}p{color:var(--muted)}a{color:#5b8def}</style></head>
-<body><h1>Lunar Lander curriculum</h1><p>Wind, turbulence and one more obstacle: a CMA-ES lander learning in stages. Coming soon.
-The plan is in the <a href="https://github.com/JCA374/lunarlander-curriculum/blob/main/PLAN.md">repository</a>.</p></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lander Curriculum</title>
+<meta name="description" content="NEAT learns to land on the moon in wind, turbulence and past a boulder, one curriculum stage at a time. Live log.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav class="top"><a class="brand" href="index.html">🌙 Lander Curriculum</a>
+  <a href="index.html" class="on">Log</a><a href="lessons.html">Lessons</a><a href="podcast/index.html">Podcast</a>
+  <a href="https://github.com/JCA374/lunarlander-curriculum">Code</a></nav>
+<main>
+<header class="hero">
+  <h1>Landing in wind, turbulence and past a boulder</h1>
+  <p class="lede">NEAT (evolving neural networks) starts from a network that copied a hand-written pilot, then works through
+    a curriculum: calm air → a steady push → gusts → turbulence → a boulder → everything at once.
+    <b>Goal: ≥ 98% landed between the flags on 1,000 unseen flights</b>, or stop on <span id="deadline">Wednesday evening</span>.</p>
+  <p class="muted" id="updated"></p>
+</header>
+
+<section class="cards" id="cards"></section>
+
+<section>
+  <h2>Curriculum</h2>
+  <p class="muted">Each stage's world, reward, pass check and the outcome I expected, written down <i>before</i> the stage ran.
+    A pass check is 100 fresh flights with no training help, confirmed on a second fresh 100.</p>
+  <div id="stages"></div>
+</section>
+
+<section>
+  <h2>Progress</h2>
+  <p class="muted">Landed rate per generation. Dots: the champion on 100 fresh check flights. Line: the champion on its
+    training + selection flights (optimistic). Shaded bands: curriculum stages.</p>
+  <div class="chartbox"><canvas id="chart" height="280"></canvas></div>
+</section>
+
+<section>
+  <h2>Log <span class="muted small">newest first</span></h2>
+  <div id="log"></div>
+</section>
+</main>
+<footer>Updated automatically every 15 minutes from the training runs. Numbers in the log are measured, not estimated;
+  "fresh" means seeds never used in training or selection.</footer>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

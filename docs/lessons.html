@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lander Lessons</title>
+<meta name="description" content="The background: the task, wind and turbulence, sensing drift, NEAT from a cloned pilot, and the curriculum.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav class="top"><a class="brand" href="index.html">🌙 Lander Curriculum</a>
+  <a href="index.html">Log</a><a href="lessons.html" class="on">Lessons</a><a href="podcast/index.html">Podcast</a>
+  <a href="https://github.com/JCA374/lunarlander-curriculum">Code</a></nav>
+<main>
+<h1>Lessons</h1>
+<p class="lede">The background, in five short pieces, while the training runs.</p>
+
+<div class="lesson">
+<h2>1. The task</h2>
+<p>Gymnasium's <b>LunarLander</b>: a lander starts at the top of the screen with a random push and must come to rest on the
+flat pad between two flags. Each step it can do one of four things: nothing, fire the left engine, the main engine,
+or the right engine. It sees eight numbers: position, velocity, angle, turn rate, and whether each leg touches the ground.</p>
+<p>The game scores each flight: about +100 to +140 for flying to the pad and coming to rest, +100 for landing, −100 for a crash,
+and a small cost for fuel. A flight scoring 200 or more counts as "solved". This project counts something stricter:
+<b>did it come to rest between the flags?</b> The goal is 98 out of 100.</p>
+</div>
+
+<div class="lesson">
+<h2>2. Wind, turbulence and the boulder</h2>
+<p><b>Wind</b> (strength 15) is a sideways force that swells and fades in gusts. <b>Turbulence</b> (1.5) is a twisting force that
+tips the lander. Neither is visible in the eight numbers: the lander only notices the wind by drifting.</p>
+<p>The <b>boulder</b> is new in this project: a rock, 1.6 to 2.6 m across, floating on the approach, 3 to 7 m above the pad and
+up to 2.5 m to the side. Often it sits right on the straight line down. Touching it is a crash. The lander is told where it is
+(three extra numbers: how far right, how far up, and how big).</p>
+</div>
+
+<div class="lesson">
+<h2>3. Sensing the drift</h2>
+<p>The earlier wind project found that a lander which only sees its velocity stalls near 85%: by the time the velocity shows
+the wind, it's too late. A <b>drift sensor</b> fixes that. It watches how the sideways speed changes from step to step
+(ignoring steps when a side engine fired, since that push would hide the wind) and keeps a running average. It is an
+accelerometer, built only from the lander's own observations. A hand-written pilot went from 72% to 94% landed with it.</p>
+<p>The network gets 13 numbers: the 8 observations, the drift sensor, the distance from the middle of the pad, and the boulder's
+position and size.</p>
+</div>
+
+<div class="lesson">
+<h2>4. NEAT, started from a pilot</h2>
+<p><b>NEAT</b> (NeuroEvolution of Augmenting Topologies) evolves a population of neural networks: the best ones have
+children with small random changes (weights nudged, sometimes a new connection or a new neuron), and the population is
+split into species so new ideas get time to mature.</p>
+<p>Plain NEAT starts from tiny networks with no hidden neurons, and in the wind project it kept them that way: a linear rule
+per action, stuck at 91%. Here NEAT starts from a <b>good network with a hidden layer</b>: 24 neurons trained to copy a
+hand-written pilot (behavioural cloning). The copying uses <b>DAgger</b>: the network flies, and at every state it reaches,
+the pilot says what it would have done, so the copy also learns to recover from its own mistakes. The seed neurons can't be
+deleted; evolution can tune them and add more.</p>
+</div>
+
+<div class="lesson">
+<h2>5. The curriculum</h2>
+<p>Learning everything at once is hard. A curriculum builds up the difficulty: calm air, then a steady sideways push,
+then real gusts (wind 5 → 15), then turbulence on top (0.5 → 1.5), then the boulder, then a long polish with everything on.
+The population carries on from stage to stage.</p>
+<p><b>Training wheels</b>: in the wind stages, an invisible hand gently pulls the lander upright, fading from full to nothing
+over the stage. Checks are always flown without it.</p>
+<p><b>Honest checks</b>: a stage passes only when the champion lands often enough on 100 flights it has never seen,
+confirmed on a second fresh 100. The final goal is measured on 1,000 unseen flights, because champions chosen on few
+flights look better than they are (the winner's curse).</p>
+</div>
+</main>
+<footer>Lander Curriculum · <a href="index.html">back to the log</a></footer>
+</body>
+</html>
