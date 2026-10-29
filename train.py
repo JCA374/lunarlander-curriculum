@@ -218,11 +218,12 @@ class Run:
         st = self.state
         path = os.path.join(self.dir, 'goal_track.csv')
         new = not os.path.exists(path)
-        with open(path, 'a') as f:
+        with open(path, 'a', newline='') as f:
+            w = csv.writer(f)                       # stage names contain commas: let csv quote them
             if new:
-                f.write('gen,stage,landed,score,crashed,boulder,timeout\n')
-            f.write(f"{st['gen']},{self.stage()['name']},{g['landed']:.3f},{g['score']:.1f},{g['crashed']:.3f},"
-                    f"{g['boulder']:.3f},{g['timeout']:.3f}\n")
+                w.writerow(['gen', 'stage', 'landed', 'score', 'crashed', 'boulder', 'timeout'])
+            w.writerow([st['gen'], self.stage()['name'], f"{g['landed']:.3f}", f"{g['score']:.1f}", f"{g['crashed']:.3f}",
+                        f"{g['boulder']:.3f}", f"{g['timeout']:.3f}"])
         best = st.setdefault('best_goal', -1)
         if g['landed'] > best:
             st['best_goal'] = g['landed']
