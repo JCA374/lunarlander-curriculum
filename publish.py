@@ -123,6 +123,19 @@ def build():
         json.dump(obj, open(os.path.join(DATA, f'{name}.json'), 'w'), separators=(',', ':'))
 
 
+def bust_caches():
+    """Pages are cached for 10 minutes: version the scripts so a browser never runs an old one."""
+    import hashlib
+    import re
+    for page, scripts in [('index.html', ['app.js']), ('network.html', ['network.js'])]:
+        path = os.path.join(DOCS, page)
+        html = open(path).read()
+        for js in scripts:
+            v = hashlib.md5(open(os.path.join(DOCS, js), 'rb').read()).hexdigest()[:8]
+            html = re.sub(rf'src="{re.escape(js)}(\?v=\w+)?"', f'src="{js}?v={v}"', html)
+        open(path, 'w').write(html)
+
+
 def network_data():
     """The Network tab's data (make_network_data.py), for the newest run that has champions."""
     runs = [d for d in sorted(glob.glob(os.path.join(ROOT, 'runs', '*')), key=os.path.getmtime)
@@ -154,5 +167,6 @@ if __name__ == '__main__':
     a = ap.parse_args()
     build()
     network_data()
+    bust_caches()
     if a.push:
         push()

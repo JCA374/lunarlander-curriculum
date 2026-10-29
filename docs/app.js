@@ -80,7 +80,8 @@ async function main() {
   } };
   // y-axis autoscale: from just below the lowest value shown (rounded down to 5) up to 100
   const ys = rows.flatMap((r) => [100 * r.champ_landed, r.check_landed === '' ? 100 : 100 * r.check_landed]).filter((v) => !isNaN(v));
-  const yMin = ys.length ? Math.max(0, Math.floor((Math.min(...ys) - 3) / 5) * 5) : 0;
+  const yMin = ys.length ? Math.max(0, Math.floor((Math.min(...ys) - 2) / 5) * 5) : 0;
+  const yMax = ys.length ? Math.min(100, Math.ceil((Math.max(...ys) + 1) / 2) * 2) : 100;
   if (window.Chart && rows.length) new Chart($('chart'), {
     type: 'line', plugins: [bandPlugin],
     data: { datasets: [
@@ -89,11 +90,11 @@ async function main() {
       { label: 'champion, 100 fresh check flights', data: rows.filter((r) => r.check_landed !== '').map((r) => ({ x: +r.gen, y: 100 * r.check_landed })),
         showLine: false, pointRadius: 3.5, backgroundColor: col('--good'), borderColor: col('--good') },
       { label: 'goal 98%', data: rows.length ? [{ x: +rows[0].gen, y: 98 }, { x: +rows[rows.length - 1].gen, y: 98 }] : [],
-        borderColor: col('--bad'), borderDash: [5, 4], borderWidth: 1, pointRadius: 0 },
+        borderColor: col('--bad'), borderDash: [5, 4], borderWidth: 1, pointRadius: 0, clip: 4 },
     ] },
     options: { animation: false, maintainAspectRatio: false, interaction: { mode: 'nearest', intersect: false },
       scales: { x: { type: 'linear', title: { display: true, text: 'generation', color: col('--muted') }, ticks: { color: col('--muted') }, grid: { color: col('--line') } },
-                y: { min: yMin, max: 100, title: { display: true, text: '% landed', color: col('--muted') }, ticks: { color: col('--muted') }, grid: { color: col('--line') } } },
+                y: { min: yMin, max: yMax, title: { display: true, text: '% landed', color: col('--muted') }, ticks: { color: col('--muted') }, grid: { color: col('--line') } } },
       plugins: { legend: { labels: { color: col('--ink'), boxWidth: 12 } } } },
   });
 
