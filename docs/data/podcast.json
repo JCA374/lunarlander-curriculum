@@ -1,0 +1,29 @@
+{
+ "episodes": [
+  {
+   "n": 1,
+   "title": "Episode 01: A head start for NEAT",
+   "date": "Thu 29 Oct 2026, 08:12",
+   "minutes": 3.6,
+   "mp3": "../podcast/episode-01.mp3",
+   "notes": [
+    "Goal: \u2265 98% landed on 1,000 unseen flights in wind 15, turbulence 1.5 and a boulder, by Wed 4 Nov 18:00",
+    "Hand-written pilot, tuned with CMA-ES: 100% calm, 93.8% wind+turbulence, 74.2% with the boulder (500 unseen flights each)",
+    "NEAT starts from a 13-24-4 network cloned from the pilot with DAgger; its hidden neurons are protected",
+    "Six-stage curriculum; stage 1 (calm) passed at generation 5: 98% and 97% on two fresh sets of 100"
+   ],
+   "transcript": [
+    "Hello, and welcome to the first episode of the lander curriculum. You asked for something ambitious. A lunar lander that comes to rest between the flags ninety eight times out of a hundred, in strong gusty wind, with turbulence twisting it, and with a boulder floating in the way. The deadline is Wednesday evening. And you asked for NEAT, the method that evolves neural networks, but with a good starting network that has hidden layers.",
+    "Let me tell you why that matters. In the last wind project, plain NEAT started from tiny networks with no hidden neurons. And it kept them that way. It landed about ninety one percent of the time, and then it stalled. When I gave it a few hidden neurons, evolution simply deleted them.",
+    "So this time NEAT gets a head start. First, I wrote a pilot by hand. It leans into the wind using a drift sensor, a kind of home made accelerometer. It flies sideways to the pad before it descends, and it steers around the boulder. Then I let a second optimiser tune its gains. I tested the tuned pilot on five hundred flights it had never seen. In calm air it landed every single time. In wind and turbulence it landed about ninety four percent of the time. With the boulder added, seventy four percent. The boulder is clearly the hard part.",
+    "Next, I copied that pilot into a neural network with twenty four hidden neurons. The copying method is called DAgger. The network flies on its own, and at every moment the hand written pilot says what it would have done. So the copy also learns how to recover from its own mistakes. The copy lands about eighty two percent of the time across a mix of worlds. Not perfect, but a very good place to start.",
+    "Every network in NEAT's first population is a copy of that network, with a little noise. And this time the hidden neurons are protected. Evolution can tune them, and add more, but it can't delete them.",
+    "Then comes the curriculum. Six stages. Calm air first. Then a steady sideways push. Then real gusts, growing from weak to full strength. Then turbulence on top. Then the boulder. And finally a long polish with everything switched on. In the wind stages there are training wheels, a gentle invisible hand that keeps the lander upright, fading away over the stage. Every check is flown without it.",
+    "And the checks are strict. A stage only passes when the best network lands often enough on a hundred flights it has never seen, and then again on a second fresh hundred. The final goal will be measured on a thousand unseen flights.",
+    "The first stage is already done. In calm air, the champion landed ninety eight out of a hundred on the check, and ninety seven on the confirmation. That took just five generations, about three minutes. Now it is working on the steady push.",
+    "The honest caveat is this. Ninety eight percent is higher than anything I have measured in this task so far, even before the boulder. The hand written pilot gets about ninety four in wind alone. So we will see how far evolution can push past its teacher.",
+    "You can follow along on the project page, where every stage, check and new champion shows up in the log, with a replay of the lander at that moment. Next episode, when the wind gets real."
+   ]
+  }
+ ]
+}
