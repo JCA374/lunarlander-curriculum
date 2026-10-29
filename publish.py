@@ -26,7 +26,7 @@ DOCS = os.path.join(ROOT, 'docs')
 DATA = os.path.join(DOCS, 'data')
 REPLAYS = os.path.join(DOCS, 'replays')
 DEADLINE = '2026-11-04 18:00'
-REPLAY_KINDS = {'new_best', 'stage_pass', 'goal_check'}
+REPLAY_KINDS = {'new_best', 'stage_pass', 'goal_check', 'goal_best'}
 
 
 def read_stats(path):
@@ -86,6 +86,11 @@ def build():
         keep = ['gen', 'stage', 'best', 'mean', 'champ_fit', 'champ_landed', 'champ_score', 'check_landed',
                 'check_score', 'wind', 'turbulence', 'support', 'boulder', 'hidden', 'conns', 'species', 'secs']
         stats_all[name] = [{k: r.get(k, '') for k in keep} for r in rows]
+        gt = os.path.join(rdir, 'goal_track.csv')
+        if os.path.exists(gt):
+            goal = {r['gen']: r['landed'] for r in read_stats(gt)}
+            for r in stats_all[name]:
+                r['goal_landed'] = goal.get(r['gen'], '')
         events = read_events(os.path.join(rdir, 'events.jsonl'))
         for i, e in enumerate(events):
             e = dict(e, run=name)
@@ -94,8 +99,10 @@ def build():
                 path = os.path.join(REPLAYS, gif)
                 if not os.path.exists(path) and os.path.exists(os.path.join(ROOT, e['champion'].lstrip('./'))):
                     stage = cur['stages'][e['stage_index']]
+                    from lander.env import GOAL_WORLD
+                    world = GOAL_WORLD if e['kind'] == 'goal_best' else stage_world(stage, 1.0)
                     try:
-                        replay_gif(os.path.join(ROOT, e['champion']), stage_world(stage, 1.0),
+                        replay_gif(os.path.join(ROOT, e['champion']), world,
                                    ANALYSIS + 777_000 + i, path)
                     except Exception as ex:      # a replay must never stop the publisher
                         print('replay failed', ex)

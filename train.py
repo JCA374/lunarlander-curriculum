@@ -27,7 +27,7 @@ from multiprocessing import Pool
 import neat
 import numpy as np
 
-from lander.env import World, run_episode, make_env, LANDING_BONUS, centre_bonus
+from lander.env import World, GOAL_WORLD, run_episode, make_env, LANDING_BONUS, centre_bonus
 from lander.neatnet import SEED, SeededGenome, NeatPolicy, size
 
 # Seed ranges: never mix them up (tests/test_seeds.py checks they don't overlap)
@@ -188,6 +188,10 @@ class Run:
                'champ_boulder': round(champ_s['boulder'], 3),
                'hidden': size(champ)[0], 'conns': size(champ)[1], 'species': len(self.pop.species.species),
                'check_landed': '', 'check_score': '', 'secs': 0}
+        # the real task, tracked every check_every generations whatever the stage (monitoring only, not selection)
+        if st['stage_gen'] % a.check_every == 0:
+            g = self.check(champ, GOAL_WORLD, reward)
+            self._goal_track(champ, g)
         # pass check: only once the ramp is done (final world, no support)
         if t >= 1 and st['stage_gen'] % a.check_every == 0:
             final = check_world(stg)
@@ -209,6 +213,21 @@ class Run:
         row['secs'] = round(time.time() - t0, 1)
         self._log(row)
         self.champion = champ
+
+    def _goal_track(self, champ, g):
+        st = self.state
+        path = os.path.join(self.dir, 'goal_track.csv')
+        new = not os.path.exists(path)
+        with open(path, 'a') as f:
+            if new:
+                f.write('gen,stage,landed,score,crashed,boulder,timeout\n')
+            f.write(f"{st['gen']},{self.stage()['name']},{g['landed']:.3f},{g['score']:.1f},{g['crashed']:.3f},"
+                    f"{g['boulder']:.3f},{g['timeout']:.3f}\n")
+        best = st.setdefault('best_goal', -1)
+        if g['landed'] > best:
+            st['best_goal'] = g['landed']
+            path = self._save_champion(champ, 'goal')
+            self._event('goal_best', stage=self.stage()['name'], check=g, champion=path)
 
     def check(self, genome, world, reward):
         st = self.state

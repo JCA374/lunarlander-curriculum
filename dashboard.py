@@ -62,6 +62,7 @@ async function load(){
   let rows=d.stats; if(win) rows=rows.slice(-win);
   const pt=(k,s=1)=>rows.filter(r=>r[k]!=='').map(r=>({x:+r.gen,y:s*r[k]}));
   chart('c1',[{label:'champion landed %',data:pt('champ_landed',100)},{label:'fresh check landed %',data:pt('check_landed',100),points:true,color:'#69db7c'},
+    {label:'REAL task, 100 fresh %',data:d.goal.filter(r=>!win||+r.gen>=+rows[0].gen).map(r=>({x:+r.gen,y:100*r.landed})),color:'#ffa94d'},
     {label:'goal 98%',data:rows.length?[{x:+rows[0].gen,y:98},{x:+rows[rows.length-1].gen,y:98}]:[],color:'#ff8787'}],{y:{suggestedMin:40,max:100}});
   chart('c2',[{label:'best',data:pt('best')},{label:'mean',data:pt('mean')},{label:'champion',data:pt('champ_fit')}]);
   chart('c3',[{label:'boulder hits %',data:pt('champ_boulder',100)},{label:'timeouts %',data:pt('champ_timeout',100)}],{y:{beginAtZero:true}});
@@ -95,8 +96,10 @@ def run_data(name):
     events = [json.loads(l) for l in open(ev) if l.strip()] if os.path.exists(ev) else []
     for e in events:
         e.pop('args', None)
+    gt = os.path.join(d, 'goal_track.csv')
+    goal = list(csv.DictReader(open(gt))) if os.path.exists(gt) else []
     alive = os.system(f'pgrep -f "^.venv/bin/python train.py .*--run {os.path.basename(name)} " > /dev/null') == 0
-    return {'stats': stats, 'events': events, 'alive': alive}
+    return {'stats': stats, 'events': events, 'alive': alive, 'goal': goal}
 
 
 class H(BaseHTTPRequestHandler):
