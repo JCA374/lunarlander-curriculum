@@ -78,6 +78,9 @@ async function main() {
       ctx.fillStyle = col('--muted'); ctx.font = '11px system-ui'; ctx.fillText(b.stage, x0 + 4, a.top + 12);
     });
   } };
+  // y-axis autoscale: from just below the lowest value shown (rounded down to 5) up to 100
+  const ys = rows.flatMap((r) => [100 * r.champ_landed, r.check_landed === '' ? 100 : 100 * r.check_landed]).filter((v) => !isNaN(v));
+  const yMin = ys.length ? Math.max(0, Math.floor((Math.min(...ys) - 3) / 5) * 5) : 0;
   if (window.Chart && rows.length) new Chart($('chart'), {
     type: 'line', plugins: [bandPlugin],
     data: { datasets: [
@@ -90,7 +93,7 @@ async function main() {
     ] },
     options: { animation: false, maintainAspectRatio: false, interaction: { mode: 'nearest', intersect: false },
       scales: { x: { type: 'linear', title: { display: true, text: 'generation', color: col('--muted') }, ticks: { color: col('--muted') }, grid: { color: col('--line') } },
-                y: { min: 0, max: 100, title: { display: true, text: '% landed', color: col('--muted') }, ticks: { color: col('--muted') }, grid: { color: col('--line') } } },
+                y: { min: yMin, max: 100, title: { display: true, text: '% landed', color: col('--muted') }, ticks: { color: col('--muted') }, grid: { color: col('--line') } } },
       plugins: { legend: { labels: { color: col('--ink'), boxWidth: 12 } } } },
   });
 
