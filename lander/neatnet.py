@@ -76,13 +76,66 @@ class SeededGenome(neat.DefaultGenome):
         return k
 
 
-class NeatPolicy:
+class FastNet:
+    """A NEAT feed-forward network compiled to a few NumPy matrix products (one per layer), about 10x faster than
+    neat-python's activate(), which loops over every connection in Python (70% of all training time, profiled
+    2026-10-30). Same layers, weights, biases, responses and activations as neat-python; only the order of float
+    additions differs, so results match to ~1e-12."""
+
     def __init__(self, genome, config):
-        self.net = neat.nn.FeedForwardNetwork.create(genome, config)
+        from neat.graphs import feed_forward_layers
+        gc = config.genome_config
+        self.inputs, self.outputs = list(gc.input_keys), list(gc.output_keys)
+        conns = [(k, c.weight) for k, c in genome.connections.items() if c.enabled]
+        layers = feed_forward_layers(self.inputs, self.outputs, [k for k, _ in conns])
+        order = self.inputs + [n for layer in layers for n in layer]
+        idx = {k: i for i, k in enumerate(order)}
+        for o in self.outputs:                         # an output nobody feeds still exists (its value: act(bias))
+            if o not in idx:
+                idx[o] = len(order); order.append(o); layers.append({o})
+        self.size, self.idx = len(order), idx
+        self.layers = []
+        for layer in layers:
+            keys = sorted(layer)
+            W = np.zeros((len(keys), self.size))
+            for (a, b), w in conns:
+                if b in layer and a in idx:
+                    W[keys.index(b), idx[a]] = w
+            nodes = [genome.nodes[k] for k in keys]
+            resp = np.array([n.response for n in nodes])
+            bias = np.array([n.bias for n in nodes])
+            tanh = np.array([n.activation == 'tanh' for n in nodes])
+            if not all(n.activation in ('tanh', 'identity') for n in nodes):
+                raise ValueError('FastNet supports tanh and identity nodes only')
+            self.layers.append((np.array([idx[k] for k in keys]), W * resp[:, None], bias, tanh))
+        self.out_idx = np.array([idx[o] for o in self.outputs])
+        self.values = {}
+
+    def activate(self, inputs):
+        v = np.zeros(self.size)
+        v[:len(self.inputs)] = inputs
+        for rows, W, b, tanh in self.layers:
+            z = b + W @ v
+            v[rows] = np.where(tanh, np.tanh(np.clip(2.5 * z, -60, 60)), z)
+        self.v = v
+        return v[self.out_idx]
+
+    @property
+    def node_values(self):
+        return {k: float(self.v[i]) for k, i in self.idx.items() if k >= 0}
+
+
+class NeatPolicy:
+    def __init__(self, genome, config, fast=True):
+        self.net = FastNet(genome, config) if fast else neat.nn.FeedForwardNetwork.create(genome, config)
         self.n = len(config.genome_config.input_keys)
 
     def __call__(self, v, flight=None):
         return int(np.argmax(self.net.activate(v[:self.n])))   # a 13-input network ignores the route sensors
+
+    @property
+    def values(self):
+        return self.net.node_values if isinstance(self.net, FastNet) else self.net.values
 
 
 def size(genome):

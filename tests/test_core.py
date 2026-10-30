@@ -178,3 +178,25 @@ def test_resume_never_reuses_a_node_key(tmp_path):
         _neat.Population = orig
     new = next(cfg.genome_config.node_indexer)
     assert all(new > max(g.nodes) for g in pop.values())
+
+
+def test_fastnet_matches_neat_python():
+    """The compiled network gives the same outputs as neat-python's, incl. evolved extra nodes and direct connections."""
+    import random as _r
+    cfg = config()
+    _r.seed(4)
+    g = SeededGenome(1)
+    mlp = MLP(16, 6, rng=np.random.default_rng(1)); mlp.W2 *= 20
+    mlp_to_genome(g, cfg.genome_config, mlp.to_dict())
+    for _ in range(6):
+        g.mutate_add_node(cfg.genome_config)
+        g.mutate_add_connection(cfg.genome_config)
+    slow, fast = NeatPolicy(g, cfg, fast=False), NeatPolicy(g, cfg)
+    X = np.random.default_rng(2).normal(0, 1, (3000, 16))
+    for x in X:
+        a, b = slow.net.activate(list(x)), fast.net.activate(x)
+        assert np.allclose(a, b, atol=1e-9)
+    env = make_env()
+    r1 = run_episode(slow, 77, World(boulder=True), env=env)
+    r2 = run_episode(fast, 77, World(boulder=True), env=env)
+    assert r1['reward'] == pytest.approx(r2['reward']) and r1['steps'] == r2['steps']

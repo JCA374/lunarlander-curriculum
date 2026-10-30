@@ -68,7 +68,7 @@ def trace(genome, config, seed):
     while not done:
         v = f.inputs()
         a = pol(v)
-        vals = pol.net.values
+        vals = pol.values
         x, y = lander_xy(env)
         steps.append({'in': [round(float(t), 5) for t in v[:pol.n]],
                       'h': {str(k): round(float(vals[k]), 3) for k in genome.nodes},
