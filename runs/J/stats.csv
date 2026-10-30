@@ -1,0 +1,5 @@
+gen,stage,stage_gen,wind,turbulence,steady,boulder,support,best,mean,champ_fit,champ_landed,champ_score,champ_timeout,champ_boulder,hidden,conns,species,check_landed,check_score,secs
+0,real task,0,15.0,1.5,0.0,1,0.0,365.9,304.2,311.2,0.881,180.0,0.012,0.048,24,480,1,0.81,171.5,117.3
+1,real task,1,15.0,1.5,0.0,1,0.0,355.7,227.5,339.6,0.929,207.5,0.0,0.012,24,481,1,,,112.7
+2,real task,2,15.0,1.5,0.0,1,0.0,345.3,214.2,330.0,0.929,179.4,0.0,0.024,24,479,1,,,117.7
+3,real task,3,15.0,1.5,0.0,1,0.0,333.3,165.9,317.6,0.869,205.4,0.0,0.048,24,479,1,,,117.7
