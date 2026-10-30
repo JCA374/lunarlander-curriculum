@@ -85,8 +85,9 @@ class Recorder:
         return self.actor(v)
 
 
-WORLDS = [World(wind=0, turbulence=0), World(), World(boulder=True), World(wind=0, turbulence=0, boulder=True),
-          World(steady=1.0), World(boulder=True)]
+# mostly the real task (the pilot v2 clone, 2026-10-30), plus plain wind and easier boulder worlds
+WORLDS = [World(boulder=True), World(boulder=True), World(boulder=True), World(),
+          World(wind=0, turbulence=0, boulder=True), World(turbulence=0, boulder=True)]
 
 
 def _collect(args):
@@ -113,7 +114,7 @@ def main():
     a = ap.parse_args()
     mlp = MLP(N_INPUTS, a.hidden)
     base = 500_000_000                   # clone seeds: part of the training range, away from NEAT's
-    with Pool(6) as pool:
+    with Pool(8) as pool:
         X, y, t_land = collect(pool, None, range(base, base + a.flights))
         print(f'teacher flights: {len(X)} steps, landed {t_land:.1%}', flush=True)
         for r in range(a.rounds):

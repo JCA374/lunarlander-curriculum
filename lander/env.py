@@ -159,8 +159,11 @@ _P = {}
 
 def _params():
     if 'p' not in _P:
+        # the route sensors are pinned to the pilot v1 margins they were built with (lander/route_params.json), so
+        # retuning the pilot never silently changes what older networks see
+        import os
         from lander.teacher import load_params
-        _P['p'] = load_params()
+        _P['p'] = load_params(os.path.join(os.path.dirname(__file__), 'route_params.json'))
     return _P['p']
 
 
