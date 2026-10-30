@@ -72,9 +72,9 @@ def fly_many(pool, jobs, chunk=10):
 
 
 def shape(r, reward):
-    """Training fitness for one flight: env score + landing bonus + centre bonus, a timeout penalty,
+    """Training fitness for one flight: score_weight x env score + landing bonus + centre bonus, a timeout penalty,
     an extra boulder-hit penalty and a small clearance bonus (all set per stage)."""
-    f = r['reward']
+    f = reward.get('score_weight', 1.0) * r['reward']
     if r['landed']:
         f += reward.get('landing_bonus', LANDING_BONUS) + reward.get('centre', 1.0) * centre_bonus(r['x_final'])
     if r['outcome'] == 'timeout':
