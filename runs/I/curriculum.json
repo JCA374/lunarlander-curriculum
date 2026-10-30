@@ -1,0 +1,23 @@
+{
+ "name": "I",
+ "note": "Attempt I: start from the pilot-v2 clone (84.8% real task) and train ONLY on the real task. Why: in H the real-task result fell from 83% (gen 0) to 58-61% by gen 25 in the 'boulder, calm air' stage, despite 40% rehearsal; the clone leans on the clean wind sensor, which reads ~0 in calm air, so those weights drift. Same lesson as B-D: with an expert start, any world but the real one erodes skill. 24 flights per network, re-fly top 8 on 60.",
+ "stages": [
+  {
+   "name": "real task",
+   "world": {
+    "boulder": true
+   },
+   "cap": 6000,
+   "flights": 24,
+   "reward": {
+    "landing_bonus": 100,
+    "timeout_penalty": 100,
+    "boulder_penalty": 50
+   },
+   "pass": {
+    "landed": 0.98
+   },
+   "expect": "Hold the clone's ~85% and push the remaining failures (boulder hits, off-pad, crashes, ~4-5% each) down. Pass = 98% on 100 + 100 fresh flights, then the 1,000-flight goal check."
+  }
+ ]
+}
