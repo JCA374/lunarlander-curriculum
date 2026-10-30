@@ -1,0 +1,107 @@
+{
+ "name": "G",
+ "note": "Attempt G = F resumed, with one change, approved by the user: a fairer boulder. Its top now stays at least 3.5 m below the start (centre 3 m above the pad up to 6.5 m minus its radius; it was up to 7 m). Before, about 2% of flights put the rock right under the start and looked unavoidable (a crude escape still hit 2.1%; now 0.65%). Lower boulders crowd the pad more: the pilot lands 71.7% on the new layout. All real-task numbers from here on are on the new layout.",
+ "stages": [
+  {
+   "name": "boulder, calm air",
+   "world": {
+    "wind": 0,
+    "turbulence": 0,
+    "boulder": true,
+    "goal_mix": 0.4
+   },
+   "ramp": {
+    "boulder_size": [
+     0.6,
+     1.0
+    ]
+   },
+   "ramp_frac": 0.5,
+   "cap": 150,
+   "reward": {
+    "landing_bonus": 100,
+    "timeout_penalty": 100,
+    "boulder_penalty": 50,
+    "clearance_bonus": 10
+   },
+   "pass": {
+    "landed": 0.95,
+    "boulder": 0.0
+   },
+   "expect": "The pilot lands 95.6% here. The copy should get there; selection now sees the boulder in every flight.",
+   "flights": 20
+  },
+  {
+   "name": "boulder, gusts",
+   "world": {
+    "turbulence": 0,
+    "boulder": true,
+    "goal_mix": 0.4
+   },
+   "ramp": {
+    "wind": [
+     5,
+     15
+    ]
+   },
+   "ramp_frac": 0.5,
+   "cap": 200,
+   "reward": {
+    "landing_bonus": 100,
+    "timeout_penalty": 100,
+    "boulder_penalty": 50,
+    "clearance_bonus": 10
+   },
+   "pass": {
+    "landed": 0.93,
+    "boulder": 0.0
+   },
+   "expect": "Steering around the boulder while gusts push sideways. Pass at 93%.",
+   "flights": 20
+  },
+  {
+   "name": "everything",
+   "world": {
+    "wind": 15,
+    "boulder": true,
+    "goal_mix": 0.4
+   },
+   "ramp": {
+    "turbulence": [
+     0.5,
+     1.5
+    ]
+   },
+   "ramp_frac": 0.5,
+   "cap": 250,
+   "reward": {
+    "landing_bonus": 100,
+    "timeout_penalty": 100,
+    "boulder_penalty": 50,
+    "clearance_bonus": 10
+   },
+   "pass": {
+    "landed": 0.95,
+    "boulder": 0.0
+   },
+   "expect": "The full final world. Start level with the pilot (~71-77%); aim to pass it.",
+   "flights": 20
+  },
+  {
+   "name": "polish",
+   "world": {
+    "boulder": true
+   },
+   "cap": 3000,
+   "flights": 24,
+   "reward": {
+    "landing_bonus": 100,
+    "timeout_penalty": 100
+   },
+   "pass": {
+    "landed": 0.98
+   },
+   "expect": "Everything on, only the env score + landing bonus. Pass = 98% on 100 + 100 fresh flights, then the 1,000-flight goal check."
+  }
+ ]
+}

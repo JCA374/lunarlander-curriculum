@@ -22,6 +22,7 @@ import pickle
 import random
 import signal
 import time
+from itertools import count
 from multiprocessing import Pool
 
 import neat
@@ -157,6 +158,11 @@ class Run:
     def _restore(self, path):
         blob = pickle.load(open(path, 'rb'))
         self.pop = neat.Population(self.config, (blob['population'], blob['species'], blob['generation']))
+        # new hidden-node keys must not collide with ANY genome's keys. neat-python would otherwise restart its counter
+        # from the first genome it mutates, and crash on an assert when another genome already has that key (run F, 21:14)
+        top = max(max(g.nodes) for g in blob['population'].values())
+        top = max([top] + [max(s.representative.nodes) for s in blob['species'].species.values()])
+        self.config.genome_config.node_indexer = count(top + 1)
         random.setstate(blob['random'])
         np.random.set_state(blob['np'])
         self.state = blob['state']

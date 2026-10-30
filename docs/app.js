@@ -117,6 +117,7 @@ function eventHtml(e) {
     case 'check_pass': title = `Check passed in ${e.stage}, confirming on a second 100`; body = `First: ${chk(e.check)}\nConfirm: ${chk(e.confirm)}`; break;
     case 'stage_pass': title = `✅ Stage passed: ${e.stage} (gen ${e.gen})`; body = `Check: ${chk(e.check)}\nConfirm: ${chk(e.confirm)}`; break;
     case 'stage_cap': title = `Stage ${e.stage} hit its generation cap; moving on`; break;
+    case 'crash': title = '⚠️ Training crashed and was restarted from its last checkpoint'; body = e.note; break;
     case 'override': title = `Manual change: ${e.what}`; body = e.reason; break;
     case 'curriculum_done': title = 'Curriculum finished'; break;
     case 'goal_check': title = `🎯 Goal check: ${pct(e.landed)} landed on ${e.n} unseen flights`; body = `95% interval ${pct(e.ci[0])} – ${pct(e.ci[1])}. Score ${e.score.toFixed(0)}. ${e.note || ''}`; break;

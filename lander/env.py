@@ -66,14 +66,20 @@ def steady_push(seed):
     return float(rng.choice([-1.0, 1.0]) * rng.uniform(0.3, 1.0) * WIND_POWER)
 
 
+START_Y = H                               # the lander starts at the top of the screen
+BOULDER_TOP_CLEARANCE = 3.5               # the boulder's top stays at least this far below the start
+
+
 def boulder_spec(seed, size=1.0):
-    """Where the boulder is for this seed: centre (metres) and radius. It floats on the approach,
-    1.6-2.6 m wide, its centre 3-7 m above the pad and up to 2.5 m to either side of the middle, so it
-    often sits right on the straight line down."""
+    """Where the boulder is for this seed: centre (metres) and radius. It floats on the approach, 1.6-2.6 m wide,
+    up to 2.5 m to either side of the middle, its centre from 3 m above the pad up to where its top is still
+    3.5 m below the start. (Until 2026-10-30 the centre went up to 7 m above the pad; the top could then sit
+    1.7 m below the start and about 2% of flights were close to unavoidable. Fixed with the user's approval.)"""
     rng = np.random.default_rng([int(seed), 13])
     r = float(rng.uniform(0.8, 1.3))
     x = float(W / 2 + rng.uniform(-2.5, 2.5))
-    y = float(PAD_Y + rng.uniform(3.0, 7.0))
+    top_max = START_Y - BOULDER_TOP_CLEARANCE - PAD_Y - r       # highest allowed centre, above the pad
+    y = float(PAD_Y + rng.uniform(3.0, top_max))
     return x, y, r * size
 
 

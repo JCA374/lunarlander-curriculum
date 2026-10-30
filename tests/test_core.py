@@ -141,3 +141,40 @@ def test_goal_mix_rehearses_the_full_task():
     real = [f for f in fl if f.boulder is not None]
     assert 50 < len(real) < 110 and all(f.world.wind == 15 and f.world.turbulence == 1.5 for f in real)
     assert check_world({'world': {'goal_mix': 0.4}}).goal_mix == 0.0
+
+
+def test_boulder_top_stays_well_below_the_start():
+    from lander.env import START_Y, PAD_Y
+    for s in range(5000):
+        x, y, r = boulder_spec(s)
+        assert y + r <= START_Y - 3.5 + 1e-9 and y - PAD_Y >= 3.0 and 0.8 <= r <= 1.3
+
+
+def test_resume_never_reuses_a_node_key(tmp_path):
+    """A restored population must hand out new node keys above every genome's keys (run F crashed on this)."""
+    import pickle, random as _r
+    from types import SimpleNamespace
+    import train
+    cfg = config()
+    pop = {}
+    for i in range(6):
+        g = SeededGenome(i); g.configure_new(cfg.genome_config)
+        for _ in range(3 * i):
+            g.mutate_add_node(cfg.genome_config)
+        pop[i] = g
+    cfg.genome_config.node_indexer = None
+    run = SimpleNamespace(config=cfg, state=None)
+    blob = {'population': pop, 'species': SimpleNamespace(species={}), 'generation': 5, 'random': _r.getstate(),
+            'np': np.random.get_state(), 'state': {'gen': 5, 'stage': 0}}
+    p = tmp_path / 'ck.pkl'; pickle.dump(blob, open(p, 'wb'))
+    run.cur = {'stages': [{'name': 'a'}]}
+    run.stage = lambda: run.cur['stages'][0]
+    import neat as _neat
+    orig = _neat.Population
+    _neat.Population = lambda c, st: SimpleNamespace()
+    try:
+        train.Run._restore(run, str(p))
+    finally:
+        _neat.Population = orig
+    new = next(cfg.genome_config.node_indexer)
+    assert all(new > max(g.nodes) for g in pop.values())
