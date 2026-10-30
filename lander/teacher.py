@@ -9,7 +9,10 @@ import numpy as np
 
 # Tunable gains (see experiments/tune_teacher.py)
 P = dict(kx=0.5, kvx=1.0, kdrift=0.35, amax=0.4, hover=0.55, kang=0.5, kvang=1.0,
-         ky=0.5, kvy=0.5, deadband=0.05, pad_first=0.6, side_margin=0.9, top_margin=0.7)
+         ky=0.5, kvy=0.5, deadband=0.05, pad_first=0.6, side_margin=0.9, top_margin=0.7,
+         kwind=0.0, edge=1.0, brake=0.0)
+# kwind (v2, 2026-10-30): lean on the clean wind sensor (input 16). edge: largest |target x| (keeps detours on screen).
+# brake: extra height target while a boulder is close below (start of the flight), so it stops falling before dodging.
 
 
 def target_x(v, p=P):
@@ -37,15 +40,19 @@ def target_x(v, p=P):
 
 def act(v, p=P):
     x, y, vx, vy, ang, vang, l, rleg, drift = v[:9]
+    wind = v[15] if len(v) > 15 else 0.0
     tx, floor = target_x(v, p)
+    tx = float(np.clip(tx, -p['edge'], p['edge']))
     ex = x - tx
-    angle_targ = ex * p['kx'] + vx * p['kvx'] + drift * p['kdrift']
+    angle_targ = ex * p['kx'] + vx * p['kvx'] + drift * p['kdrift'] + wind * p['kwind']
     angle_targ = np.clip(angle_targ, -p['amax'], p['amax'])
     hover_targ = p['hover'] * abs(ex)
     if abs(ex) > 0.1:                         # pad-first: hold height while far off the target
         hover_targ = max(hover_targ, p['pad_first'] * min(abs(ex), 0.6))
     if floor is not None:
         hover_targ = max(hover_targ, floor)
+    if p['brake'] and v[12] > 0 and -0.6 < v[11] < 0 and abs(v[10]) < v[12] + 0.15:
+        hover_targ = max(hover_targ, y + p['brake'])     # boulder close below: stop the fall first
     angle_todo = (angle_targ - ang) * p['kang'] - vang * p['kvang']
     hover_todo = (hover_targ - y) * p['ky'] - vy * p['kvy']
     if l or rleg:

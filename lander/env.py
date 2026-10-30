@@ -24,9 +24,9 @@ LEG_DOWN = 18 / SCALE
 PAD_HALF_WIDTH = 0.2                      # flags at x = +-0.2 in observation units
 CENTRE_BONUS = 50.0
 LANDING_BONUS = 100.0
-N_INPUTS = 15
+N_INPUTS = 16
 INPUT_NAMES = ['x', 'y', 'vx', 'vy', 'angle', 'vangle', 'leg_l', 'leg_r', 'drift', '|x|',
-               'boulder_dx', 'boulder_dy', 'boulder_r', 'waypoint_dx', 'above_boulder']
+               'boulder_dx', 'boulder_dy', 'boulder_r', 'waypoint_dx', 'above_boulder', 'wind_est']
 
 
 @dataclass
@@ -101,12 +101,36 @@ class DriftSensor:
         return self.value
 
 
+# Wind sensor (input 16, added 2026-10-30): the drift sensor above turned out to correlate only 0.14 with the true wind,
+# because a tilted main engine pushes sideways too. This one subtracts each action's known sideways push, measured in
+# calm air (experiments in the journal): nothing 0, left engine -0.00983, right engine +0.0098, main engine
+# -0.07135 sin(angle) per step. Main-engine steps are trusted 10x less (their random spread is as big as a full gust).
+# Correlation with the true wind: 0.97, rms error 0.17 gust units (40 flights).
+SIDE_PUSH = {0: 0.0, 1: -0.00983, 3: 0.0098}
+MAIN_PUSH = -0.07135
+WIND_RATE, WIND_MAIN_WEIGHT = 0.3, 0.1
+
+
+class WindSensor:
+    def __init__(self):
+        self.value = 0.0
+
+    def update(self, prev_obs, obs, action):
+        air = not (prev_obs[6] or prev_obs[7] or obs[6] or obs[7])
+        if air:
+            push = MAIN_PUSH * math.sin(prev_obs[4]) if action == 2 else SIDE_PUSH[action]
+            m = (obs[2] - prev_obs[2] - push) / (0.0008 * WIND_POWER)
+            w = WIND_MAIN_WEIGHT if action == 2 else 1.0
+            self.value += WIND_RATE * w * (m - self.value)
+        return self.value
+
+
 def lander_xy(env):
     p = env.unwrapped.lander.position
     return float(p.x), float(p.y)
 
 
-def inputs(obs, drift, boulder, lander_pos):
+def inputs(obs, drift, boulder, lander_pos, wind=0.0):
     """The 13 numbers every policy sees: 8 observations, the drift sensor, |x|, and the boulder's
     position relative to the lander and its radius, in observation units (x / 10 m, y / 6.67 m).
     Without a boulder the last three are 0."""
@@ -117,7 +141,7 @@ def inputs(obs, drift, boulder, lander_pos):
         bx, by, r = boulder
         lx, ly = lander_pos
         v += [(bx - lx) / (W / 2), (by - ly) / (H / 2), r / (W / 2)]
-    return np.array(v + waypoint_inputs(v))
+    return np.array(v + waypoint_inputs(v) + [wind])
 
 
 def waypoint_inputs(v):
@@ -162,6 +186,8 @@ class Flight:
             _add_boulder(env, *self.boulder)
         self.sensor = DriftSensor()
         self.drift = 0.0
+        self.wind_sensor = WindSensor()
+        self.wind = 0.0
         self.action = 0
         self.reward = 0.0          # env score
         self.steps = 0
@@ -170,7 +196,7 @@ class Flight:
         self.touch_speed = None
 
     def inputs(self):
-        return inputs(self.obs, self.drift, self.boulder, lander_xy(self.env))
+        return inputs(self.obs, self.drift, self.boulder, lander_xy(self.env), self.wind)
 
     def touching(self):
         u = self.env.unwrapped
@@ -186,9 +212,11 @@ class Flight:
             u.lander.ApplyTorque(t, True)
         was_touching = self.touching()
         vy_before = float(self.obs[3])
+        prev = self.obs
         self.obs, r, terminated, truncated, _ = self.env.step(int(action))
         self.action = int(action)
         self.drift = self.sensor.update(self.obs, self.action)
+        self.wind = self.wind_sensor.update(prev, self.obs, self.action)
         self.reward += float(r)
         self.steps += 1
         if not was_touching and self.touching() and self.touch_speed is None:

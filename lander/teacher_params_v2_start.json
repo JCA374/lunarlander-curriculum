@@ -1,0 +1,18 @@
+{
+ "kx": 1.9491,
+ "kvx": 1.6435,
+ "kdrift": 0.2718,
+ "amax": 0.369,
+ "hover": 0.8785,
+ "kang": 1.1711,
+ "kvang": 1.1939,
+ "ky": 0.3442,
+ "kvy": 1.4707,
+ "deadband": 0.0312,
+ "pad_first": 0.2049,
+ "side_margin": 1.9079,
+ "top_margin": 0.4979,
+ "kwind": 0.3,
+ "edge": 0.7,
+ "brake": 0.2
+}

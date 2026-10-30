@@ -1,7 +1,8 @@
 """Tune the teacher's gains with CMA-ES on training seeds.
     python -m experiments.tune_teacher GENS [goal] [OUT]
 default: wind+turbulence, half the flights with the boulder (the first tuning). 'goal': every flight is the final task
-(wind 15, turbulence 1.5, boulder), starting from the current tuned gains. OUT: where to write the gains."""
+(wind 15, turbulence 1.5, boulder), starting from the current tuned gains. OUT: where to write the gains.
+    START (4th argument): a gains file to start from."""
 import json, sys
 from multiprocessing import Pool
 import cma, numpy as np
@@ -10,7 +11,7 @@ from lander.teacher import Teacher, P, load_params
 
 GOAL = len(sys.argv) > 2 and sys.argv[2] == 'goal'
 OUT = sys.argv[3] if len(sys.argv) > 3 else 'lander/teacher_params.json'
-START = load_params() if GOAL else P
+START = load_params(sys.argv[4]) if len(sys.argv) > 4 else (load_params() if GOAL else P)
 KEYS = list(P)
 X0 = np.array([START[k] for k in KEYS])
 WORLD_W, WORLD_B = World(), World(boulder=True)
@@ -30,7 +31,8 @@ if __name__ == '__main__':
     best = None
     with Pool(6) as pool:
         for g in range(gens):
-            seeds = list(range(g * 1000 + (600_000_000 if GOAL else 0), g * 1000 + (600_000_000 if GOAL else 0) + 160))
+            base = 600_000_000 + (100_000 if len(sys.argv) > 4 else 0) if GOAL else 0
+            seeds = list(range(g * 1000 + base, g * 1000 + base + 160))
             xs = es.ask()
             fs = [score(pool, x, seeds) for x in xs]
             es.tell(xs, [-f for f in fs])
