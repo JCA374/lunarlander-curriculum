@@ -107,16 +107,24 @@ class FastNet:
             tanh = np.array([n.activation == 'tanh' for n in nodes])
             if not all(n.activation in ('tanh', 'identity') for n in nodes):
                 raise ValueError('FastNet supports tanh and identity nodes only')
-            self.layers.append((np.array([idx[k] for k in keys]), W * resp[:, None], bias, tanh))
+            rows = np.array([idx[k] for k in keys])
+            W = W * resp[:, None]
+            # tanh rows get the 2.5 gain folded in (neat-python: tanh(2.5 z), clipped at +-60: tanh is already +-1 there)
+            t, i = tanh, ~tanh
+            self.layers.append((rows[t], 2.5 * W[t], 2.5 * bias[t], rows[i], W[i], bias[i]))
         self.out_idx = np.array([idx[o] for o in self.outputs])
+        self.n_in = len(self.inputs)
         self.values = {}
 
     def activate(self, inputs):
-        v = np.zeros(self.size)
-        v[:len(self.inputs)] = inputs
-        for rows, W, b, tanh in self.layers:
-            z = b + W @ v
-            v[rows] = np.where(tanh, np.tanh(np.clip(2.5 * z, -60, 60)), z)
+        v = self.buf if hasattr(self, 'buf') else np.zeros(self.size)
+        self.buf = v
+        v[:self.n_in] = inputs
+        for tr, tW, tb, ir, iW, ib in self.layers:
+            if len(tr):
+                v[tr] = np.tanh(tW @ v + tb)
+            if len(ir):
+                v[ir] = iW @ v + ib
         self.v = v
         return v[self.out_idx]
 

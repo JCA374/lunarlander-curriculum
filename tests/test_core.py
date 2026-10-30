@@ -93,7 +93,9 @@ def test_smoke_train_then_resume(tmp_path):
             return []
 
     def run_until(n_rows):
-        p = subprocess.Popen(cmd, cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        import signal
+        # own process group, so the trainer AND its worker pool can always be killed (orphans ran for 7 hours once)
+        p = subprocess.Popen(cmd, cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
         try:
             t0 = time.time()
             while len(rows()) < n_rows and time.time() - t0 < 600:   # generous: the CPU is often busy with training
@@ -101,8 +103,10 @@ def test_smoke_train_then_resume(tmp_path):
             p.terminate()
             p.wait(600)
         finally:
-            if p.poll() is None:
-                p.kill()
+            try:
+                os.killpg(p.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
 
     try:
         run_until(3)
