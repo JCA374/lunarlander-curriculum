@@ -39,7 +39,7 @@
 <main>
 <h1>How the lander sees the world</h1>
 <p class="lede">You see a picture: hills, flags, a rock, a little craft fighting the wind. The lander sees none of that.
-Fifty times a second it gets <b>15 numbers</b>, and that is its entire world. This page shows the two side by side, on a real
+Fifty times a second it gets <b>16 numbers</b>, and that is its entire world. This page shows the two side by side, on a real
 flight of the current champion, so you can see what it knows, what it guesses, and what it is blind to.</p>
 <p class="muted" id="meta"></p>
 
@@ -57,12 +57,12 @@ flight of the current champion, so you can see what it knows, what it guesses, a
   <div class="box"><h3>What the lander sees</h3><canvas class="view" id="seen" width="600" height="400"></canvas>
     <div class="legend"><span><i class="sw" style="background:#69db7c"></i>its speed</span><span><i class="sw" style="background:#ff8787"></i>its drift sensor (the sideways push it feels)</span><span><i class="sw" style="background:#ffa94d"></i>waypoint</span></div></div>
 </div>
-<p>The right-hand picture is drawn <i>only</i> from the 15 numbers. The pad is a line at the origin, because every position is measured
+<p>The right-hand picture is drawn <i>only</i> from the numbers it gets. The pad is a line at the origin, because every position is measured
 from the pad's centre. There is no ground: the lander doesn't know the hills exist. The boulder is a perfect circle, because three numbers
 (right, up, size) are all it gets. The wind isn't there at all, only the drift sensor: the total sideways push it feels, from the wind and from its own tilted main engine.</p>
 
 <div class="box">
-<h3>The 15 numbers, right now</h3>
+<h3>The 16 numbers, right now</h3>
 <div class="gauges" id="gauges"></div>
 </div>
 </section>
@@ -76,7 +76,12 @@ because a tilted main engine pushes sideways too. In this flight the lander stee
 larger than the wind itself.</p>
 <p>That's still useful: "something is pushing me sideways, this hard" is exactly what it needs to know in order to lean back, and it's
 what lifted the hand-written pilot from 72% to 94% landings in wind. But a pure wind estimate would have to subtract the lander's own thrust,
-which this sensor doesn't do. That's an idea for a better sensor.</p>
+which this sensor doesn't do.</p>
+<div class="note"><b>Update, 30 October: a better sensor.</b> I measured each action's sideways push in calm air (the side engines
+±0.0098 per step, the main engine −0.071 × sin(tilt)) and built a <b>clean wind sensor</b> that subtracts it, trusting main-engine
+steps ten times less because their random spread is as big as a full gust. Over 40 flights it correlates <b>0.97</b> with the true wind;
+the drift sensor only <b>0.14</b>. It's the green line above (from run H on), and the 16th input. With it, the hand-written pilot went
+from 75% to 86% on the real task.</div>
 <div class="box"><div style="position:relative;height:260px"><canvas id="windc"></canvas></div></div>
 <p>Turbulence is the same story, but twisting instead of pushing. The orange line below is the true turning force; the lander only feels it
 through its <b>turn rate</b> (green), after the fact.</p>
@@ -126,6 +131,6 @@ flight. Things to look for in the replay:</p>
 </main>
 <footer>Lander Curriculum · drawn in your browser from <code>data/senses.json</code>, regenerated with every site update.</footer>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="senses.js?v=c61a5d16"></script>
+<script src="senses.js?v=3e7e45d7"></script>
 </body>
 </html>

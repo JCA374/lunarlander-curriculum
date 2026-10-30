@@ -48,7 +48,7 @@
   <a href="https://github.com/JCA374/lunarlander-curriculum">Code</a></nav>
 <main>
 <h1>The network: what it is, how it thinks, how it evolved</h1>
-<p class="lede">The lander is flown by a small neural network: 15 numbers in, 4 scores out, every step, 50 times a second.
+<p class="lede">The lander is flown by a small neural network: 16 numbers in, 4 scores out, every step, 50 times a second.
 This page takes it apart with live examples drawn from the real, current champion. Everything on the page is computed
 in your browser from the actual weights, so you can poke at it.</p>
 <p class="muted" id="meta"></p>
@@ -92,7 +92,7 @@ and dashed lines are connections evolution <i>added</i>.</div>
 
 <!-- 2 -->
 <section id="inputs">
-<h2>2. The 15 inputs, one by one</h2>
+<h2>2. The 16 inputs, one by one</h2>
 <p>A neural network only knows what it's told. These are the numbers it gets every step. The first eight come straight from the
 game; the other seven are <b>sensors</b> computed from them, because the earlier wind project showed that <i>what the network senses
 matters more than how big it is</i>. The last column shows the values at one real moment of a flight (pick it in section 6).</p>
@@ -325,6 +325,6 @@ stuck at 91%. Protecting them keeps the pilot's knowledge in place while evoluti
 </main>
 <footer>Lander Curriculum · computed in your browser from <code>data/network.json</code>, regenerated with every site update.</footer>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<script src="network.js?v=c48abd56"></script>
+<script src="network.js?v=8a2e4bca"></script>
 </body>
 </html>

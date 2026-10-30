@@ -23,6 +23,7 @@ const INPUT_INFO = {
   boulder_r: ['boulder size', 'radius ÷ 10 m: 0.08-0.13 at full size; 0 = no boulder'],
   waypoint_dx: ['route: off the waypoint by', 'x minus where it should head (beside the boulder, else the pad)'],
   above_boulder: ['route: height to spare', 'height above the boulder top while over it; 0 elsewhere'],
+  wind_est: ['clean wind sensor (new 30 Oct)', 'sideways speed change minus each action’s known push; +1 ≈ a full gust to the right (r = 0.97 with the true wind)'],
 };
 
 let D, NET, mode = 'newest', step = 0, thr = 0.6, hoverNode = null, cur = null;

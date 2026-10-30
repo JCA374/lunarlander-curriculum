@@ -12,6 +12,7 @@ const GROUPS = [
   ['added sensors', [8, 9]],
   ['the boulder', [10, 11, 12]],
   ['route sensors', [13, 14]],
+  ['clean wind sensor (from 30 Oct)', [15]],
 ];
 const RANGE = { 6: 1, 7: 1, 12: 0.15 };
 
@@ -142,7 +143,8 @@ function charts() {
     plugins: { legend: { labels: { boxWidth: 12 } } }, onClick: (e, _, ch) => setStep(Math.round(ch.scales.x.getValueForPixel(e.x))) });
   windChart = new Chart($('windc'), { type: 'line', plugins: [cursorPlugin], data: { datasets: [
     { label: 'true wind force ÷ 15 (hidden)', data: st.map((s, i) => ({ x: i, y: s.wind / 15 })), borderColor: '#4dabf7', pointRadius: 0, borderWidth: 2 },
-    { label: 'drift sensor (sideways push it feels: wind + own tilted thrust)', data: st.map((s, i) => ({ x: i, y: s.in[8] })), borderColor: '#ff8787', pointRadius: 0, borderWidth: 2 }] },
+    { label: 'drift sensor (sideways push it feels: wind + own tilted thrust)', data: st.map((s, i) => ({ x: i, y: s.in[8] })), borderColor: '#ff8787', pointRadius: 0, borderWidth: 2 },
+    ...(st[0].in.length > 15 ? [{ label: 'clean wind sensor (subtracts its own engines)', data: st.map((s, i) => ({ x: i, y: s.in[15] })), borderColor: '#69db7c', pointRadius: 0, borderWidth: 2 }] : [])] },
     options: base('force, as a share of a full gust') });
   torqueChart = new Chart($('torquec'), { type: 'line', plugins: [cursorPlugin], data: { datasets: [
     { label: 'true turbulence torque ÷ 1.5 (hidden)', data: st.map((s, i) => ({ x: i, y: s.torque / 1.5 })), borderColor: '#ffa94d', pointRadius: 0, borderWidth: 2 },
