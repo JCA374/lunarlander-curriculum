@@ -45,19 +45,19 @@ def test_seed_ranges_do_not_overlap():
 
 
 def test_mlp_to_genome_flies_identically():
-    mlp = MLP(15, 8, rng=np.random.default_rng(3))
+    mlp = MLP(16, 8, rng=np.random.default_rng(3))
     mlp.W2 *= 20                                   # realistic: cloned output scores reach +-20 (tanh would tie them)
     cfg = config()
     g = SeededGenome(1)
     mlp_to_genome(g, cfg.genome_config, mlp.to_dict())
     pol = NeatPolicy(g, cfg)
-    X = np.random.default_rng(0).normal(0, 1, (2000, 15))
+    X = np.random.default_rng(0).normal(0, 1, (2000, 16))
     assert all(pol(x) == mlp(x) for x in X)
     assert size(g)[0] == 8                                          # at least one hidden layer, kept
 
 
 def test_seed_hidden_nodes_are_never_deleted():
-    SEED['net'], SEED['noise'] = MLP(15, 6).to_dict(), 0.0
+    SEED['net'], SEED['noise'] = MLP(16, 6).to_dict(), 0.0
     try:
         cfg = config()
         SeededGenome.protected = tuple(range(4, 10))
@@ -74,7 +74,7 @@ def test_smoke_train_then_resume(tmp_path):
     """Train, SIGTERM after 3 generations, resume: the generation counter carries on from the checkpoint."""
     import pickle, shutil, time
     seed = tmp_path / 'seed.json'
-    seed.write_text(json.dumps(MLP(15, 4).to_dict()))
+    seed.write_text(json.dumps(MLP(16, 4).to_dict()))
     cur = tmp_path / 'c.json'
     cur.write_text(json.dumps({'name': 't', 'stages': [
         {'name': 'a', 'world': {'wind': 0, 'turbulence': 0}, 'cap': 1000, 'pass': {'landed': 2}}]}))
@@ -96,10 +96,10 @@ def test_smoke_train_then_resume(tmp_path):
         p = subprocess.Popen(cmd, cwd=ROOT, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         try:
             t0 = time.time()
-            while len(rows()) < n_rows and time.time() - t0 < 120:
+            while len(rows()) < n_rows and time.time() - t0 < 600:   # generous: the CPU is often busy with training
                 time.sleep(0.2)
             p.terminate()
-            p.wait(120)
+            p.wait(600)
         finally:
             if p.poll() is None:
                 p.kill()

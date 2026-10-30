@@ -316,7 +316,7 @@ def main():
     ap.add_argument('--curriculum', required=True)
     ap.add_argument('--run', required=True)
     ap.add_argument('--config', default='neat-config.ini')
-    ap.add_argument('--seed-net', default='models/seed_mlp15.json')
+    ap.add_argument('--seed-net', default='models/seed_mlp16.json')
     ap.add_argument('--seed-noise', type=float, default=0.02)
     ap.add_argument('--workers', type=int, default=6)
     ap.add_argument('--flights', type=int, default=10)
