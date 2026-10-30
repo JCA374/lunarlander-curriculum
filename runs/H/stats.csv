@@ -1,2 +1,6 @@
 gen,stage,stage_gen,wind,turbulence,steady,boulder,support,best,mean,champ_fit,champ_landed,champ_score,champ_timeout,champ_boulder,hidden,conns,species,check_landed,check_score,secs
 0,"boulder, calm air",0,0,0,0.0,1,0.0,373.0,342.4,338.6,0.925,199.3,0.0,0.025,24,480,1,,,100.7
+1,"boulder, calm air",1,0,0,0.0,1,0.0,385.0,277.1,372.2,0.988,223.7,0.0,0.013,24,479,1,,,110.5
+2,"boulder, calm air",2,0,0,0.0,1,0.0,381.1,255.0,366.2,0.887,233.0,0.0,0.013,24,479,1,,,112.0
+3,"boulder, calm air",3,0,0,0.0,1,0.0,388.8,257.0,369.0,0.975,223.0,0.0,0.025,24,477,1,,,112.7
+4,"boulder, calm air",4,0,0,0.0,1,0.0,381.4,268.5,359.6,0.938,219.0,0.013,0.0,24,478,1,,,107.4
